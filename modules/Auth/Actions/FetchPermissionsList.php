@@ -15,7 +15,6 @@ final readonly class FetchPermissionsList
 {
     public function handle(DatatableDTO $dto): LengthAwarePaginator|Collection
     {
-
         $query = $this->validateFeaturesAreActive(Permission::query());
 
         $query = Datatable::applyFilter($query, $dto, ['name', 'description']);

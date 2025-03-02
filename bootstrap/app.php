@@ -8,6 +8,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Modules\Common\Core\Commands\DeleteBucketTempFiles;
 use Modules\Common\Logs\Commands\DeleteOldAccessLogs;
 use Modules\Tenant\Jobs\InactiveStatusAds;
 
@@ -36,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withCommands([
         DeleteOldAccessLogs::class,
+        DeleteBucketTempFiles::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         $schedule->call(new InactiveStatusAds())
@@ -44,5 +46,6 @@ return Application::configure(basePath: dirname(__DIR__))
             ->onOneServer();
 
         $schedule->command('app:delete-old-access-logs')->daily();
+        $schedule->command('app:delete-bucket-temp-files')->daily();
     })
     ->create();

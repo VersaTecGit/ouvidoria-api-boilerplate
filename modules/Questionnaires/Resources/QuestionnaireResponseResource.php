@@ -6,6 +6,7 @@ namespace Modules\Questionnaires\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Carbon;
 
 final class QuestionnaireResponseResource extends JsonResource
 {
@@ -20,6 +21,7 @@ final class QuestionnaireResponseResource extends JsonResource
             'ended_at' => $this->ended_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'attachments' => $this->getMedia('attachments')->map(fn ($media) => $media->getTemporaryUrl(Carbon::now()->addHours(2))),
         ];
     }
 }

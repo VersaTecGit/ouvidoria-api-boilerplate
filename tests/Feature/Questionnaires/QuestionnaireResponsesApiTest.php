@@ -113,6 +113,7 @@ class QuestionnaireResponsesApiTest extends AuthenticatedTestCase
 
     public function test_should_create_new_questionnaire_response(): void
     {
+        $token = $this->loginAndGetTokenWithPermissions([Permissions::CREATE_QUESTIONNAIRE_RESPONSES->value]);
         $questionnaire = QuestionnairesHelper::createTestQuestionnaire(QuestionnairesGroupsHelper::createTestQuestionnairesGroup());
 
         $response = $this->postJson(
@@ -124,6 +125,7 @@ class QuestionnaireResponsesApiTest extends AuthenticatedTestCase
             [
                 'X-Domain' => 'foo',
                 'Accept' => 'application/json',
+                'Authorization' => "Bearer {$token}",
             ],
         );
 
@@ -150,12 +152,15 @@ class QuestionnaireResponsesApiTest extends AuthenticatedTestCase
 
     public function test_should_validate_create_new_questionnaire_response(): void
     {
+        $token = $this->loginAndGetTokenWithPermissions([Permissions::CREATE_QUESTIONNAIRE_RESPONSES->value]);
+
         $response = $this->postJson(
             '/api/v1/questionnaires/responses',
             [],
             [
                 'X-Domain' => 'foo',
                 'Accept' => 'application/json',
+                'Authorization' => "Bearer {$token}",
             ]
         );
 

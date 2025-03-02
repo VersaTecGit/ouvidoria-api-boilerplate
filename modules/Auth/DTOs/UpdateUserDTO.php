@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Modules\Auth\DTOs;
 
 use Illuminate\Validation\Rules\Password;
-use WendellAdriel\ValidatedDTO\Casting\ArrayCast;
 use WendellAdriel\ValidatedDTO\Casting\BooleanCast;
-use WendellAdriel\ValidatedDTO\Casting\StringCast;
 use WendellAdriel\ValidatedDTO\ValidatedDTO;
 
 final class UpdateuserDTO extends ValidatedDTO
@@ -21,8 +19,6 @@ final class UpdateuserDTO extends ValidatedDTO
     public ?string $current_password;
 
     public ?string $password;
-
-    public ?array $units;
 
     public bool $active;
 
@@ -39,8 +35,6 @@ final class UpdateuserDTO extends ValidatedDTO
                 'confirmed',
             ],
             'active' => ['sometimes', 'boolean'],
-            'units' => ['sometimes', 'array'],
-            'units.*' => ['string', 'exists:units,uuid'],
         ];
     }
 
@@ -53,7 +47,6 @@ final class UpdateuserDTO extends ValidatedDTO
     {
         return [
             'active' => new BooleanCast(),
-            'units' => new ArrayCast(new StringCast()),
         ];
     }
 }

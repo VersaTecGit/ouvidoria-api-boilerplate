@@ -74,6 +74,7 @@ enum Permissions: string
     case DELETE_QUESTIONNAIRES = 'ALL-delete-questionnaires';
 
     case LIST_QUESTIONNAIRE_RESPONSES = 'ALL-list-questionnaire-responses';
+    case CREATE_QUESTIONNAIRE_RESPONSES = 'ALL-create-questionnaire-responses';
     case VIEW_QUESTIONNAIRE_RESPONSES = 'ALL-view-questionnaire-responses';
 
     public static function all(): array
@@ -147,6 +148,7 @@ enum Permissions: string
             self::DELETE_QUESTIONNAIRES,
 
             self::LIST_QUESTIONNAIRE_RESPONSES,
+            self::CREATE_QUESTIONNAIRE_RESPONSES,
             self::VIEW_QUESTIONNAIRE_RESPONSES,
         ];
     }
@@ -228,6 +230,7 @@ enum Permissions: string
             self::DELETE_QUESTIONNAIRES => 'Deletar questionários',
 
             self::LIST_QUESTIONNAIRE_RESPONSES => 'Listar respostas de questionários',
+            self::CREATE_QUESTIONNAIRE_RESPONSES => 'Criar respostas de questionários',
             self::VIEW_QUESTIONNAIRE_RESPONSES => 'Visualizar respostas de questionários',
         };
     }

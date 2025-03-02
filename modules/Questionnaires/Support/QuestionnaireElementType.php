@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Questionnaires\Support;
 
+use Modules\Questionnaires\DTOs\FileUploadElementDTO;
+
 enum QuestionnaireElementType: string
 {
     case TEXT_FIELD = 'TextField';
@@ -19,6 +21,7 @@ enum QuestionnaireElementType: string
     case CHECKBOX_FIELD = 'CheckboxField';
     case SWITCH_FIELD = 'SwitchField';
     case DATE_RANGE_FIELD = 'DateRangeField';
+    case FILE_UPLOAD_FIELD = 'FileUploadField';
 
     public static function all(): array
     {
@@ -36,6 +39,7 @@ enum QuestionnaireElementType: string
             self::CHECKBOX_FIELD,
             self::SWITCH_FIELD,
             self::DATE_RANGE_FIELD,
+            self::FILE_UPLOAD_FIELD,
         ];
     }
 
@@ -50,7 +54,7 @@ enum QuestionnaireElementType: string
             self::TEXT_FIELD => 'Texto curto',
             self::TITLE_FIELD => 'Título',
             self::SUB_TITLE_FIELD => 'Subtítulo',
-            self::PARAGRAPH_FIELD => 'Páragrafo',
+            self::PARAGRAPH_FIELD => 'Parágrafo',
             self::SEPARATOR_FIELD => 'Separador',
             self::SPACER_FIELD => 'Espaçamento',
             self::NUMBER_FIELD => 'Campo numérico',
@@ -60,6 +64,32 @@ enum QuestionnaireElementType: string
             self::CHECKBOX_FIELD => 'Múltipla escolha',
             self::SWITCH_FIELD => 'Veracidade',
             self::DATE_RANGE_FIELD => 'Intervalo de datas',
+            self::FILE_UPLOAD_FIELD => 'Upload de arquivo',
+        };
+    }
+
+    public function validadeElementAnswer(mixed $answer): bool
+    {
+        return match ($this) {
+            self::TEXT_FIELD => is_string($answer),
+            self::NUMBER_FIELD => is_string($answer) && is_numeric($answer),
+            self::TEXT_AREA_FIELD => is_string($answer),
+            self::DATE_FIELD => is_string($answer) && (bool) strtotime($answer),
+            self::SELECT_FIELD => is_string($answer),
+            self::CHECKBOX_FIELD => is_string($answer) && is_array(explode(',', $answer)),
+            self::SWITCH_FIELD => is_string($answer) && in_array($answer, ['true', 'false']),
+            self::DATE_RANGE_FIELD => is_string($answer) && (function ($answer) {
+                $decodedAnswer = json_decode($answer, true);
+
+                return is_array($decodedAnswer) && (bool) strtotime($decodedAnswer['start_date']) && (bool) strtotime($decodedAnswer['end_date']);
+            })($answer),
+            self::FILE_UPLOAD_FIELD => is_string($answer) && (function ($answer) {
+                $decodedAnswer = json_decode($answer, true);
+
+                FileUploadElementDTO::fromArray($decodedAnswer);
+
+                return true;
+            })($answer),
         };
     }
 }

@@ -6,8 +6,6 @@ namespace Modules\Auth\DTOs;
 
 use Illuminate\Validation\Rules\Password;
 use Modules\Auth\Models\Role;
-use WendellAdriel\ValidatedDTO\Casting\ArrayCast;
-use WendellAdriel\ValidatedDTO\Casting\StringCast;
 use WendellAdriel\ValidatedDTO\ValidatedDTO;
 
 final class CreateUserDTO extends ValidatedDTO
@@ -24,8 +22,6 @@ final class CreateUserDTO extends ValidatedDTO
 
     public array $extra_permissions;
 
-    public array $units;
-
     protected function rules(): array
     {
         return [
@@ -40,8 +36,6 @@ final class CreateUserDTO extends ValidatedDTO
             'role' => ['sometimes', 'string', 'exists:roles,name', 'not_in:super-admin'],
             'extra_permissions' => ['sometimes', 'array'],
             'extra_permissions.*' => ['exists:permissions,name'],
-            'units' => ['sometimes', 'array'],
-            'units.*' => ['string', 'exists:units,uuid'],
         ];
     }
 
@@ -50,7 +44,6 @@ final class CreateUserDTO extends ValidatedDTO
         return [
             'role' => 'user',
             'extra_permissions' => [],
-            'units' => [],
         ];
     }
 
@@ -58,7 +51,6 @@ final class CreateUserDTO extends ValidatedDTO
     {
         return [
             'role' => fn (string $property, mixed $value) => Role::findByName($value),
-            'units' => new ArrayCast(new StringCast()),
         ];
     }
 }

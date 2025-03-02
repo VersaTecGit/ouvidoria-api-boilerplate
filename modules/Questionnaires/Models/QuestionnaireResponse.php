@@ -7,9 +7,13 @@ namespace Modules\Questionnaires\Models;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Common\Core\Models\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-final class QuestionnaireResponse extends Model
+final class QuestionnaireResponse extends Model implements HasMedia
 {
+    use InteractsWithMedia;
+
     protected $fillable = [
         'uuid',
         'questionnaire_id',
@@ -39,5 +43,10 @@ final class QuestionnaireResponse extends Model
     public function scopeAll(Builder $query): Builder
     {
         return $query;
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('attachments');
     }
 }

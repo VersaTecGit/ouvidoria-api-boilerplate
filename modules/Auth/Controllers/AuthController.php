@@ -39,7 +39,7 @@ final class AuthController extends Controller
         return new NoContentResponse();
     }
 
-    public function User(LoggedUser $action): ApiSuccessResponse
+    public function user(LoggedUser $action): ApiSuccessResponse
     {
         return new ApiSuccessResponse(new UserResource($action->handle()));
     }
