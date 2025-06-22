@@ -6,8 +6,11 @@ namespace Modules\Auth\Actions;
 
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Modules\Auth\Filters\UserFilters;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserLogin;
@@ -20,23 +23,20 @@ final readonly class FetchUsersDashboard
 
     public function handle(DashboardDTO $dto): array
     {
-        $usersQuery = User::query()->filtered($this->filters);
-        $usersQuery = Dashboard::applyDateRangeFilter($usersQuery, $dto);
+        $cacheKey = 'dashboard_users_' . md5(json_encode([
+            'start_date' => $dto->start_date ?? null,
+            'end_date' => $dto->end_date ?? null,
+            'filters' => request()->all(),
+        ]));
 
-        $usersLoginQuery = UserLogin::query()
-            ->whereIn('user_id', function (QueryBuilder $query) use ($usersQuery) {
-                $query->select('id')->fromSub($usersQuery, 'sub_users');
-            });
+        if ($dto->ignore_cache) {
+            $data = $this->generateDashboardData($dto);
+            Cache::put($cacheKey, $data, now()->addMinutes(30));
 
-        $usersLoginQuery = Dashboard::applyDateRangeFilter($usersLoginQuery, $dto);
+            return $data;
+        }
 
-        return [
-            'users_count' => $this->getUsersCount(clone $usersQuery),
-            'last_day_logins_count' => $this->getLastDayLoginsCount(clone $usersLoginQuery),
-            'users_created_last_month' => $this->getUsersCreatedLastMonth(clone $usersQuery),
-            'logins_per_month_chart' => $this->getLoginsPerMonthChart(clone $usersLoginQuery),
-            'last_logins_table' => $this->getLastLoginsTable(clone $usersLoginQuery),
-        ];
+        return Cache::remember($cacheKey, now()->addMinutes(30), fn () => $this->generateDashboardData($dto));
     }
 
     protected function getUsersCount(Builder $builder): array
@@ -85,14 +85,16 @@ final readonly class FetchUsersDashboard
             ->orderBy('month', 'desc')
             ->take(6)
             ->get()
-            ->pluck('total', 'month');
+            ->select('total', 'month');
 
-        $data = collect(range(0, 5))->map(function (int $index) use ($loginsPerMonth) {
+        $loginsPerMonthKeyed = $loginsPerMonth->pluck('total', 'month');
+
+        $data = collect(range(0, 5))->map(function (int $index) use ($loginsPerMonthKeyed) {
             $month = CarbonImmutable::now()->subMonths($index);
 
             return [
                 'month' => ucfirst($month->locale('pt_BR')->monthName),
-                'value' => $loginsPerMonth->get($month->format('Y-m')) ?? 0,
+                'value' => $loginsPerMonthKeyed->get($month->format('Y-m')) ?? 0,
             ];
         })->reverse()->toArray();
 
@@ -114,5 +116,39 @@ final readonly class FetchUsersDashboard
         return [
             'data' => $data,
         ];
+    }
+
+    private function generateDashboardData(DashboardDTO $dto): array
+    {
+        DB::beginTransaction();
+        try {
+            $usersQuery = User::query()->filtered($this->filters)->all();
+            $usersQuery = Dashboard::applyDateRangeFilter($usersQuery, $dto);
+
+            $usersLoginQuery = UserLogin::query()
+                ->whereIn('user_id', function (QueryBuilder $query) use ($usersQuery) {
+                    $query->select('id')->fromSub($usersQuery, 'sub_users');
+                });
+
+            $usersLoginQuery = Dashboard::applyDateRangeFilter($usersLoginQuery, $dto);
+
+            $data = [
+                'users_count' => $this->getUsersCount(clone $usersQuery),
+                'last_day_logins_count' => $this->getLastDayLoginsCount(clone $usersLoginQuery),
+                'users_created_last_month' => $this->getUsersCreatedLastMonth(clone $usersQuery),
+                'logins_per_month_chart' => $this->getLoginsPerMonthChart(clone $usersLoginQuery),
+                'last_logins_table' => $this->getLastLoginsTable(clone $usersLoginQuery),
+            ];
+
+            DB::commit();
+
+            return [
+                'data' => $data,
+                'updated_at' => now(),
+            ];
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }

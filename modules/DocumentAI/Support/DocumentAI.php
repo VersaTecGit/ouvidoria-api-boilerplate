@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Modules\DocumentAI\Support;
 
-use Exception;
 use Google\Cloud\DocumentAI\V1\Client\DocumentProcessorServiceClient;
 use Google\Cloud\DocumentAI\V1\Document;
 use Google\Cloud\DocumentAI\V1\ProcessRequest;
@@ -12,6 +11,7 @@ use Google\Cloud\DocumentAI\V1\RawDocument;
 use Google\Protobuf\Internal\RepeatedField;
 use Illuminate\Support\Facades\Storage;
 use Modules\Common\Core\DTOs\UploadedFileDTO;
+use Modules\Common\Core\Exceptions\ApiException;
 use Throwable;
 
 readonly class DocumentAI
@@ -39,7 +39,7 @@ readonly class DocumentAI
             file_put_contents($tempPath, $fileContents);
 
             if (! file_exists($tempPath)) {
-                throw new Exception("File could not be downloaded: {$tempPath}");
+                throw new ApiException("File could not be downloaded: {$tempPath}");
             }
 
             $fileType = mime_content_type($tempPath);

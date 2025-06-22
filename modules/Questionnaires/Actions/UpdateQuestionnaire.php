@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Questionnaires\Actions;
 
-use Exception;
+use Modules\Common\Core\Exceptions\ApiException;
 use Modules\Questionnaires\DTOs\UpdateQuestionnaireDTO;
 use Modules\Questionnaires\Models\Questionnaire;
 
@@ -19,7 +19,7 @@ final readonly class UpdateQuestionnaire
         $questionnaire = $this->fetchQuestionnaire->handle($uuid);
 
         if ($questionnaire->active && (! isset($dto->active) || $dto->active === true)) {
-            throw new Exception('Não é possível editar um questionário ativo.', 400);
+            throw new ApiException('Não é possível editar um questionário ativo.', 400);
         }
 
         $updateData = $dto->nullableSafeToArray(Questionnaire::nullable());

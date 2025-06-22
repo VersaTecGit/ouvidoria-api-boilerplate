@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Auth\Actions;
 
-use Exception;
 use Illuminate\Support\Facades\Http;
+use Modules\Common\Core\Exceptions\ApiException;
 
 final readonly class FetchVersa360Client
 {
@@ -27,7 +27,7 @@ final readonly class FetchVersa360Client
         $clientResponse = Http::withToken($token)->get('https://api.versa360.com.br/v1/clients/me')->json();
 
         if (! $clientResponse['status']) {
-            throw new Exception('Failed to fetch client data from Versa360');
+            throw new ApiException('Failed to fetch client data from Versa360');
         }
 
         return $clientResponse['result'];

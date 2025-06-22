@@ -8,7 +8,10 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Modules\Common\Core\Commands\DeleteBucketTempFiles;
+use Modules\Common\Core\Exceptions\ApiException;
+use Modules\Common\Core\Exceptions\Exception as CoreException;
 use Modules\Common\Logs\Commands\DeleteOldAccessLogs;
 use Modules\Tenant\Jobs\InactiveStatusAds;
 
@@ -32,6 +35,30 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             if ($request->is('api/v1*')) {
                 return response()->json(['message' => 'Sessão Expirada.'], 401);
+            }
+        });
+
+        $exceptions->render(function (ValidationException $e, Request $request) {
+            if ($request->is('api/v1*')) {
+                return response()->json(['message' => $e->getMessage(), 'errors' => $e->errors()], 422);
+            }
+        });
+
+        $exceptions->render(function (ApiException $e, Request $request) {
+            if ($request->is('api/v1*')) {
+                return response()->json(['message' => $e->getMessage()], $e->getCode());
+            }
+        });
+
+        $exceptions->render(function (CoreException $e, Request $request) {
+            if ($request->is('api/v1*')) {
+                return response()->json(['message' => $e->getMessage()], $e->getCode());
+            }
+        });
+
+        $exceptions->render(function (Exception $e, Request $request) {
+            if ($request->is('api/v1*') && config('app.debug') === false) {
+                return response()->json(['message' => 'Erro interno do servidor.'], 500);
             }
         });
     })

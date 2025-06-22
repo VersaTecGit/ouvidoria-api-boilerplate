@@ -272,7 +272,7 @@ class QuestionnairesGroupsApiTest extends AuthenticatedTestCase
             ]
         );
 
-        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
     }
 
     public function test_should_delete_questionnaires_group(): void

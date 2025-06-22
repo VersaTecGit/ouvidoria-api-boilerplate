@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Questionnaires\Actions;
 
-use Exception;
+use Modules\Common\Core\Exceptions\ApiException;
 
 final readonly class DeleteQuestionnairesGroup
 {
@@ -15,12 +15,12 @@ final readonly class DeleteQuestionnairesGroup
         $questionnairesGroup = $this->fetchQuestionnairesGroup->handle($uuid);
 
         if ($questionnairesGroup->active) {
-            throw new Exception('Não é possível deletar um questionário ativo.', 400);
+            throw new ApiException('Não é possível deletar um questionário ativo.', 400);
         }
 
         foreach ($questionnairesGroup->questionnaires as $questionnaire) {
             if ($questionnaire->active) {
-                throw new Exception('Não é possível deletar um grupo de questionários com questionários ativos.', 400);
+                throw new ApiException('Não é possível deletar um grupo de questionários com questionários ativos.', 400);
             }
         }
 

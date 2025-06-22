@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Questionnaires\Actions;
 
-use Exception;
+use Modules\Common\Core\Exceptions\ApiException;
 
 final readonly class DeleteQuestionnaire
 {
@@ -17,7 +17,7 @@ final readonly class DeleteQuestionnaire
         $questionnaire = $this->fetchQuestionnaire->handle($uuid);
 
         if ($questionnaire->active) {
-            throw new Exception('Não é possível deletar um questionário ativo.', 400);
+            throw new ApiException('Não é possível deletar um questionário ativo.', 400);
         }
 
         $questionnaire->delete();

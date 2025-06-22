@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Auth\Actions;
 
-use Exception;
 use Modules\Auth\Support\DefaultRoles;
 use Modules\Common\Core\DTOs\DatatableDTO;
+use Modules\Common\Core\Exceptions\ApiException;
 
 final readonly class DeleteRole
 {
@@ -16,14 +16,14 @@ final readonly class DeleteRole
     {
         $role = $this->fetchRole->handle($role);
 
-        throw_if($role->name === DefaultRoles::ADMIN->value, new Exception('Não é permitido deletar o grupo ' . $role->descripiton . '.'));
+        throw_if($role->name === DefaultRoles::ADMIN->value, new ApiException('Não é permitido deletar o grupo ' . $role->descripiton . '.'));
 
         $dto = new DatatableDTO();
         $dto->per_page = 'all';
         $members = $this->fetchRoleMember->handle($role->name, $dto);
 
         if ($members->count() > 0) {
-            throw new Exception('Grupo não pode ser excluído por estar em uso.');
+            throw new ApiException('Grupo não pode ser excluído por estar em uso.');
         }
 
         $role->delete();

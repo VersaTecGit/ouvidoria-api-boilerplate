@@ -6,6 +6,7 @@ namespace Modules\Questionnaires\Actions;
 
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Modules\Common\Core\Exceptions\ApiException;
 use Modules\Questionnaires\DTOs\CreateQuestionnaireResponseDTO;
 use Modules\Questionnaires\DTOs\FileUploadElementDTO;
 use Modules\Questionnaires\Models\QuestionnaireResponse;
@@ -47,11 +48,11 @@ final readonly class CreateQuestionnaireResponse
             $type = QuestionnaireElementType::tryFrom($element['type']);
 
             if (! $type) {
-                throw new Exception('Tipo de elemento não encontrado');
+                throw new ApiException('Tipo de elemento não encontrado');
             }
 
             if (! $type->validadeElementAnswer($answer)) {
-                throw new Exception("Resposta inválida para o tipo de elemento: {$type->description()}, resposta: {$answer}");
+                throw new ApiException("Resposta inválida para o tipo de elemento: {$type->description()}, resposta: {$answer}");
             }
 
             if ($type === QuestionnaireElementType::FILE_UPLOAD_FIELD) {
