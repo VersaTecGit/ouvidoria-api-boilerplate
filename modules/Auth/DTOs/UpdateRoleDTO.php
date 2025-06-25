@@ -15,7 +15,7 @@ final class UpdateRoleDTO extends ValidatedDTO
     protected function rules(): array
     {
         return [
-            'name' => ['sometimes', 'string', 'min:4', 'alpha_dash', 'max:255'],
+            'name' => ['sometimes', 'string', 'min:4', 'max:255'],
             'description' => ['sometimes', 'string', 'max:255'],
         ];
     }

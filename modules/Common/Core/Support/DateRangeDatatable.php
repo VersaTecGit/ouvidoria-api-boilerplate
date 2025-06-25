@@ -11,6 +11,10 @@ readonly class DateRangeDatatable extends Datatable
 {
     public static function applyDateRangeFilter(Builder $builder, DateRangeDTO $dto, string $dateField = 'created_at'): Builder
     {
+        if (empty($dto->start_date) && empty($dto->end_date)) {
+            return $builder;
+        }
+
         if (! empty($dto->start_date)) {
             $builder->where($dateField, '>=', $dto->start_date->startOfDay());
         }
