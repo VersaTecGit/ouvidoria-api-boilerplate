@@ -10,6 +10,8 @@ final readonly class FetchRole
 {
     public function handle(string $name): Role
     {
-        return Role::findByName($name);
+        $decodedRole = urldecode($name);
+
+        return Role::findByName($decodedRole);
     }
 }
