@@ -26,7 +26,7 @@ final readonly class FetchUsersDashboard
         $cacheKey = 'dashboard_users_' . md5(json_encode([
             'start_date' => $dto->start_date ?? null,
             'end_date' => $dto->end_date ?? null,
-            'filters' => request()->all(),
+            'filters' => collect(request()->all())->except('ignore_cache')->toArray()
         ]));
 
         if ($dto->ignore_cache) {
