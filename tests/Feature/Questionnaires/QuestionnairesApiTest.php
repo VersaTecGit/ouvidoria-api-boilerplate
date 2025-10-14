@@ -244,6 +244,94 @@ class QuestionnairesApiTest extends AuthenticatedTestCase
             ]);
     }
 
+    public function test_should_return_questionnaires_by_uuid_when_inactive(): void
+    {
+        $token = $this->loginAndGetTokenWithPermissions([Permissions::VIEW_QUESTIONNAIRES->value]);
+        $questionnairesGroup = QuestionnairesGroupsHelper::createTestQuestionnairesGroup();
+
+        $questionnaire = QuestionnairesHelper::createTestQuestionnaire($questionnairesGroup);
+
+        $questionnaire->update(['active' => false]);
+
+        $response = $this->getJson(
+            "/api/v1/questionnaires/{$questionnaire->uuid}",
+            [
+                'X-Domain' => 'foo',
+                'Accept' => 'application/json',
+                'Authorization' => "Bearer {$token}",
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure([
+                'id',
+                'questionnaires_group_id',
+                'title',
+                'description',
+                'icon',
+                'version',
+                'max_version',
+                'active',
+                'elements',
+                'created_at',
+                'updated_at',
+                'started_at',
+                'expired_at',
+            ]);
+    }
+
+    public function test_should_throw_exception_when_not_has_permission_to_view_inactive_questionnaire(): void
+    {
+        $questionnairesGroup = QuestionnairesGroupsHelper::createTestQuestionnairesGroup();
+
+        $questionnaire = QuestionnairesHelper::createTestQuestionnaire($questionnairesGroup);
+
+        $questionnaire->update(['active' => false]);
+
+        $response = $this->getJson(
+            "/api/v1/questionnaires/{$questionnaire->uuid}",
+            [
+                'X-Domain' => 'foo',
+                'Accept' => 'application/json',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    public function test_should_return_questionnaires_by_uuid_when_active(): void
+    {
+        $questionnairesGroup = QuestionnairesGroupsHelper::createTestQuestionnairesGroup();
+
+        $questionnaire = QuestionnairesHelper::createTestQuestionnaire($questionnairesGroup);
+        $questionnaire->update(['active' => true]);
+
+        $response = $this->getJson(
+            "/api/v1/questionnaires/{$questionnaire->uuid}",
+            [
+                'X-Domain' => 'foo',
+                'Accept' => 'application/json',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure([
+                'id',
+                'questionnaires_group_id',
+                'title',
+                'description',
+                'icon',
+                'version',
+                'max_version',
+                'active',
+                'elements',
+                'created_at',
+                'updated_at',
+                'started_at',
+                'expired_at',
+            ]);
+    }
+
     public function test_should_return_404_when_not_exists_questionnaires(): void
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::VIEW_QUESTIONNAIRES->value]);

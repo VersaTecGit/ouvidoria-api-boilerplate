@@ -22,7 +22,6 @@ Route::middleware('auth')->group(function () {
 
         Route::prefix('responses')->group(function () {
             Route::get('/', [QuestionnaireResponseController::class, 'index'])->can('ALL-list-questionnaire-responses');
-            Route::post('/', [QuestionnaireResponseController::class, 'store'])->can('ALL-create-questionnaire-responses');
 
             Route::prefix('{uuid}')->group(function () {
                 Route::get('/', [QuestionnaireResponseController::class, 'show'])->can('ALL-view-questionnaire-responses');
@@ -31,10 +30,13 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/', [QuestionnaireController::class, 'index'])->can('ALL-list-questionnaires');
         Route::post('/', [QuestionnaireController::class, 'store'])->can('ALL-create-questionnaires');
+
         Route::prefix('{uuid}')->group(function () {
-            Route::get('/', [QuestionnaireController::class, 'show'])->can('ALL-view-questionnaires');
             Route::put('/', [QuestionnaireController::class, 'update'])->can('ALL-edit-questionnaires');
             Route::delete('/', [QuestionnaireController::class, 'destroy'])->can('ALL-delete-questionnaires');
         });
     });
 });
+
+Route::post('questionnaires/responses', [QuestionnaireResponseController::class, 'store']);
+Route::get('questionnaires/{uuid}', [QuestionnaireController::class, 'show']);
