@@ -70,6 +70,10 @@ enum QuestionnaireElementType: string
 
     public function validadeElementAnswer(mixed $answer): bool
     {
+        if (empty($answer)) {
+            return true;
+        }
+
         return match ($this) {
             self::TEXT_FIELD => is_string($answer),
             self::NUMBER_FIELD => is_string($answer) && is_numeric($answer),
