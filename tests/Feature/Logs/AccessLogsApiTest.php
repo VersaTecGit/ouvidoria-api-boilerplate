@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace Tests\Feature\Logs;
+
 use Illuminate\Http\Response;
 use Modules\Auth\Support\Permissions;
 use Modules\Common\Logs\Models\AccessLog;

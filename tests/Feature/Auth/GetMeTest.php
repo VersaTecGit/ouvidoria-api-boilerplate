@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
+namespace Tests\Feature\Auth;
+
 use Illuminate\Http\Response;
 use Modules\Auth\Support\Permissions;
 use Tests\AuthenticatedTestCase;
 use Tests\Traits\RefreshDatabaseWithTenant;
 
-class GeMeTest extends AuthenticatedTestCase
+class GetMeTest extends AuthenticatedTestCase
 {
     use RefreshDatabaseWithTenant;
 

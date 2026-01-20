@@ -12,7 +12,9 @@ trait Utils
     public function nullableSafeToArray(array $nullable = []): array
     {
         return collect($this->toArray())
-            ->filter(fn (mixed $item, string $key) => ! is_null($item) || (in_array($key, $nullable) && Arr::exists($this->data, $key)))
+            ->filter(
+                fn (mixed $item, string $key) => ! is_null($item) || in_array($key, $nullable, true) && is_array($this->data) && Arr::exists($this->data, $key)
+            )
             ->toArray();
     }
 

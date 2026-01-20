@@ -6,10 +6,10 @@ namespace Modules\Tenant\DTOs;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\Rule;
+use Modules\Common\Core\DTOs\Concerns\CarbonImmutableCast;
 use Modules\Common\Core\DTOs\UploadedFileDTO;
 use Modules\Tenant\Models\Ads;
 use WendellAdriel\ValidatedDTO\Casting\BooleanCast;
-use WendellAdriel\ValidatedDTO\Casting\CarbonImmutableCast;
 use WendellAdriel\ValidatedDTO\Casting\DTOCast;
 use WendellAdriel\ValidatedDTO\ValidatedDTO;
 

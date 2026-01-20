@@ -8,6 +8,21 @@ use Stancl\Tenancy\Middleware;
 use Stancl\Tenancy\Resolvers;
 use Stancl\Tenancy\UniqueIdentifierGenerators;
 
+/**
+ * Tenancy for Laravel.
+ *
+ * Documentation: https://tenancyforlaravel.com
+ *
+ * We can sustainably develop Tenancy for Laravel thanks to our sponsors.
+ * Big thanks to everyone listed here: https://github.com/sponsors/stancl
+ *
+ * You can also support us, and save time, by purchasing these products:
+ *   Exclusive content for sponsors: https://sponsors.tenancyforlaravel.com
+ *   Multi-Tenant SaaS boilerplate: https://portal.archte.ch/boilerplate
+ *   Multi-Tenant Laravel in Production e-book: https://portal.archte.ch/book
+ *
+ * All of these products can also be accessed at https://portal.archte.ch
+ */
 return [
     /**
      * Configuration for the models used by Tenancy.
@@ -15,6 +30,7 @@ return [
     'models' => [
         'tenant' => Modules\Tenant\Models\Tenant::class,
         'domain' => Stancl\Tenancy\Database\Models\Domain::class,
+        'impersonation_token' => Stancl\Tenancy\Database\Models\ImpersonationToken::class,
 
         /**
          * Name of the column used to relate models to tenants.
@@ -32,7 +48,10 @@ return [
          * SECURITY NOTE: Keep in mind that autoincrement IDs come with potential enumeration issues (such as tenant storage URLs).
          *
          * @see \Stancl\Tenancy\UniqueIdentifierGenerators\UUIDGenerator
+         * @see \Stancl\Tenancy\UniqueIdentifierGenerators\ULIDGenerator
+         * @see \Stancl\Tenancy\UniqueIdentifierGenerators\UUIDv7Generator
          * @see \Stancl\Tenancy\UniqueIdentifierGenerators\RandomHexGenerator
+         * @see \Stancl\Tenancy\UniqueIdentifierGenerators\RandomIntGenerator
          * @see \Stancl\Tenancy\UniqueIdentifierGenerators\RandomStringGenerator
          */
         'id_generator' => UniqueIdentifierGenerators\UUIDGenerator::class,
@@ -91,12 +110,15 @@ return [
         /**
          * Identification middleware tenancy recognizes as path identification middleware.
          *
-         * This is used during determining whether whether a path identification is used
-         * during operations specific to path identification, e.g. forgetting the tenant parameter in ForgetTenantParameter.
+         * This is used for determining if a path identification middleware is used
+         * during operations specific to path identification.
+         *
+         * This is used for forgetting the tenant parameter using the ForgetTenantParameter listener.
+         * The listener only has an effect when path identification middleware
+         * is used in the global middleware stack and certain other conditions are met.
          *
          * If you're using a custom path identification middleware, add it here.
          *
-         * @see \Stancl\Tenancy\Actions\CloneRoutesAsTenant
          * @see \Stancl\Tenancy\Listeners\ForgetTenantParameter
          */
         'path_identification_middleware' => [
@@ -118,6 +140,7 @@ return [
             Resolvers\PathTenantResolver::class => [
                 'tenant_parameter_name' => 'tenant',
                 'tenant_model_column' => null, // null = tenant key
+                'tenant_route_name_prefix' => 'tenant.',
                 'allowed_extra_model_columns' => [], // used with binding route fields
 
                 'cache' => false,
@@ -125,13 +148,18 @@ return [
                 'cache_store' => null, // null = default
             ],
             Resolvers\RequestDataTenantResolver::class => [
+                // Set any of these to null to disable that method of identification
+                'header' => 'X-Tenant',
+                'cookie' => 'tenant',
+                'query_parameter' => 'tenant',
+
+                'tenant_model_column' => null, // null = tenant key
+
                 'cache' => false,
                 'cache_ttl' => 3600, // seconds
                 'cache_store' => null, // null = default
             ],
         ],
-
-        // todo@docs update integration guides to use Stancl\Tenancy::defaultMiddleware()
     ],
 
     /**
@@ -145,18 +173,19 @@ return [
         Bootstrappers\DatabaseTenancyBootstrapper::class,
         Bootstrappers\CacheTenancyBootstrapper::class,
         // Bootstrappers\CacheTagsBootstrapper::class, // Alternative to CacheTenancyBootstrapper
+        // Bootstrappers\DatabaseCacheBootstrapper::class, // Separates cache by DB rather than by prefix, must run after DatabaseTenancyBootstrapper
         Bootstrappers\FilesystemTenancyBootstrapper::class,
         Bootstrappers\QueueTenancyBootstrapper::class,
         // Bootstrappers\RedisTenancyBootstrapper::class, // Note: phpredis is needed
 
-        // Support for edge cases
+        // Adds support for the database session driver
         Bootstrappers\DatabaseSessionBootstrapper::class,
-        Bootstrappers\JobBatchBootstrapper::class,
 
         // Configurable bootstrappers
+        Bootstrappers\TenantConfigBootstrapper::class,
         // Bootstrappers\RootUrlBootstrapper::class,
         // Bootstrappers\UrlGeneratorBootstrapper::class,
-        // Bootstrappers\MailConfigBootstrapper::class, // Note: Queueing mail requires using QueueTenancyBootstrapper with $forceRefresh set to true
+        // Bootstrappers\MailConfigBootstrapper::class,
         // Bootstrappers\BroadcastingConfigBootstrapper::class,
         // Bootstrappers\BroadcastChannelPrefixBootstrapper::class,
 
@@ -165,7 +194,6 @@ return [
         // Bootstrappers\Integrations\ScoutPrefixBootstrapper::class,
 
         // Bootstrappers\PostgresRLSBootstrapper::class,
-        // Modules\Tenant\Bootstrappers\BucketsBootstrapper::class,
         Modules\Tenant\Bootstrappers\PermissionsBootstrapper::class,
     ],
 
@@ -199,6 +227,7 @@ return [
         'managers' => [
             'sqlite' => Stancl\Tenancy\Database\TenantDatabaseManagers\SQLiteDatabaseManager::class,
             'mysql' => Stancl\Tenancy\Database\TenantDatabaseManagers\MySQLDatabaseManager::class,
+            'mariadb' => Stancl\Tenancy\Database\TenantDatabaseManagers\MySQLDatabaseManager::class,
             'pgsql' => Stancl\Tenancy\Database\TenantDatabaseManagers\PostgreSQLDatabaseManager::class,
             'sqlsrv' => Stancl\Tenancy\Database\TenantDatabaseManagers\MicrosoftSQLDatabaseManager::class,
 
@@ -207,6 +236,7 @@ return [
          * You can customize the grants given to these users by changing the $grants property.
          */
             // 'mysql' => Stancl\Tenancy\Database\TenantDatabaseManagers\PermissionControlledMySQLDatabaseManager::class,
+            // 'pgsql' => Stancl\Tenancy\Database\TenantDatabaseManagers\PermissionControlledPostgreSQLDatabaseManager::class,
             // 'sqlsrv' => Stancl\Tenancy\TenantDatabaseManagers\PermissionControlledMicrosoftSQLServerDatabaseManager::class,
 
         /**
@@ -214,9 +244,17 @@ return [
          * want to separate tenant DBs by schemas rather than databases.
          */
             // 'pgsql' => Stancl\Tenancy\Database\TenantDatabaseManagers\PostgreSQLSchemaManager::class, // Separate by schema instead of database
+            // 'pgsql' => Stancl\Tenancy\Database\TenantDatabaseManagers\PermissionControlledPostgreSQLSchemaManager::class, // Also permission controlled
         ],
 
-        // todo@docblock
+        /*
+         * Drop tenant databases when `php artisan migrate:fresh` is used.
+         * You may want to use this locally since deleting tenants only
+         * deletes their databases when they're deleted individually, not
+         * when the records are mass deleted from the database.
+         *
+         * Note: This overrides the default MigrateFresh command.
+         */
         'drop_tenant_databases_on_migrate_fresh' => true,
     ],
 
@@ -277,7 +315,7 @@ return [
          *
          * Note: This will implicitly add your configured session store to the list of prefixed stores above.
          */
-        'scope_sessions' => true,
+        'scope_sessions' => in_array(env('SESSION_DRIVER'), ['redis', 'memcached', 'dynamodb', 'apc'], true),
 
         'tag_base' => 'tenant', // This tag_base, followed by the tenant_id, will form a tag that will be applied on each cache call.
     ],
@@ -321,7 +359,6 @@ return [
          */
         'url_override' => [
             // Note that the local disk you add must exist in the tenancy.filesystem.root_override config
-            // todo@v4 Rename url_override to something that describes the config key better
             'public' => 'public-%tenant%',
         ],
 
@@ -357,7 +394,7 @@ return [
          * leave asset() helper tenancy disabled and explicitly use tenant_asset() calls in places
          * where you want to use tenant-specific assets (product images, avatars, etc).
          */
-        'asset_helper_tenancy' => false, // todo@rename asset_helper_override?
+        'asset_helper_override' => false,
     ],
 
     /**
@@ -388,9 +425,9 @@ return [
     'features' => [
         // Stancl\Tenancy\Features\UserImpersonation::class,
         // Stancl\Tenancy\Features\TelescopeTags::class,
-        Stancl\Tenancy\Features\TenantConfig::class,
         // Stancl\Tenancy\Features\CrossDomainRedirect::class,
         // Stancl\Tenancy\Features\ViteBundler::class,
+        // Stancl\Tenancy\Features\DisallowSqliteAttach::class,
     ],
 
     /**
@@ -411,7 +448,6 @@ return [
 
     /**
      * Pending tenants config.
-     * This is useful if you're looking for a way to always have a tenant ready to be used.
      */
     'pending' => [
         /**
@@ -420,6 +456,7 @@ return [
          * Note: when disabled, this will also ignore pending tenants when running the tenant commands (migration, seed, etc.)
          */
         'include_in_queries' => true,
+
         /**
          * Defines how many pending tenants you want to have ready in the pending tenant pool.
          * This depends on the volume of tenants you're creating.

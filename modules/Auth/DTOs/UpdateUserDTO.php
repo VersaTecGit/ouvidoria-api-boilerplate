@@ -8,7 +8,7 @@ use Illuminate\Validation\Rules\Password;
 use WendellAdriel\ValidatedDTO\Casting\BooleanCast;
 use WendellAdriel\ValidatedDTO\ValidatedDTO;
 
-final class UpdateuserDTO extends ValidatedDTO
+final class UpdateUserDTO extends ValidatedDTO
 {
     public ?string $name;
 

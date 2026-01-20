@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use Illuminate\Contracts\Database\Eloquent\Builder;
-use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Route as RouteFacade;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Stancl\JobPipeline\JobPipeline;
 use Stancl\Tenancy\Actions\CloneRoutesAsTenant;
@@ -15,11 +14,25 @@ use Stancl\Tenancy\Events;
 use Stancl\Tenancy\Jobs;
 use Stancl\Tenancy\Listeners;
 use Stancl\Tenancy\Middleware;
-use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
 use Stancl\Tenancy\Middleware\InitializeTenancyByRequestData;
 use Stancl\Tenancy\Overrides\TenancyUrlGenerator;
 use Stancl\Tenancy\ResourceSyncing;
 
+/**
+ * Tenancy for Laravel.
+ *
+ * Documentation: https://tenancyforlaravel.com
+ *
+ * We can sustainably develop Tenancy for Laravel thanks to our sponsors.
+ * Big thanks to everyone listed here: https://github.com/sponsors/stancl
+ *
+ * You can also support us, and save time, by purchasing these products:
+ *   Exclusive content for sponsors: https://sponsors.tenancyforlaravel.com
+ *   Multi-Tenant SaaS boilerplate: https://portal.archte.ch/boilerplate
+ *   Multi-Tenant Laravel in Production e-book: https://portal.archte.ch/book
+ *
+ * All of these products can also be accessed at https://portal.archte.ch
+ */
 class TenancyServiceProvider extends ServiceProvider
 {
     // By default, no namespace is used to support the callable array syntax.
@@ -39,8 +52,7 @@ class TenancyServiceProvider extends ServiceProvider
 
                     // Your own jobs to prepare the tenant.
                     // Provision API keys, create S3 buckets, anything you want!
-                    // \Modules\Tenant\Jobs\CreateTenantBucket::class,
-                ])->send(fn (Events\TenantCreated $event) => $event->tenant)->shouldBeQueued(false), // `false` by default, but you likely want to make this `true` in production.
+                ])->send(fn (Events\TenantCreated $event) => $event->tenant)->shouldBeQueued(false),
 
                 // Listeners\CreateTenantStorage::class,
             ],
@@ -51,6 +63,7 @@ class TenancyServiceProvider extends ServiceProvider
             Events\DeletingTenant::class => [
                 JobPipeline::make([
                     Jobs\DeleteDomains::class,
+                    // Jobs\RemoveStorageSymlinks::class,
                 ])->send(fn (Events\DeletingTenant $event) => $event->tenant)->shouldBeQueued(false),
 
                 // Listeners\DeleteTenantStorage::class,
@@ -58,8 +71,9 @@ class TenancyServiceProvider extends ServiceProvider
             Events\TenantDeleted::class => [
                 JobPipeline::make([
                     Jobs\DeleteDatabase::class,
-                    // Jobs\RemoveStorageSymlinks::class,
-                ])->send(fn (Events\TenantDeleted $event) => $event->tenant)->shouldBeQueued(false), // `false` by default, but you probably want to make this `true` for production.
+                ])->send(fn (Events\TenantDeleted $event) => $event->tenant)->shouldBeQueued(false),
+
+                // ResourceSyncing\Listeners\DeleteAllTenantMappings::class,
             ],
 
             Events\TenantMaintenanceModeEnabled::class => [],
@@ -108,6 +122,9 @@ class TenancyServiceProvider extends ServiceProvider
             ResourceSyncing\Events\SyncedResourceSaved::class => [
                 ResourceSyncing\Listeners\UpdateOrCreateSyncedResource::class,
             ],
+            ResourceSyncing\Events\SyncedResourceDeleted::class => [
+                ResourceSyncing\Listeners\DeleteResourceMapping::class,
+            ],
             ResourceSyncing\Events\SyncMasterDeleted::class => [
                 ResourceSyncing\Listeners\DeleteResourcesInTenants::class,
             ],
@@ -120,7 +137,9 @@ class TenancyServiceProvider extends ServiceProvider
             ResourceSyncing\Events\CentralResourceDetachedFromTenant::class => [
                 ResourceSyncing\Listeners\DeleteResourceInTenant::class,
             ],
-            // Fired only when a synced resource is changed in a different DB than the origin DB (to avoid infinite loops)
+
+            // Fired only when a synced resource is changed (as a result of syncing)
+            // in a different DB than DB from which the change originates (to avoid infinite loops)
             ResourceSyncing\Events\SyncedResourceSavedInForeignDatabase::class => [],
 
             // Storage symlinks
@@ -144,23 +163,17 @@ class TenancyServiceProvider extends ServiceProvider
         $this->makeTenancyMiddlewareHighestPriority();
         $this->overrideUrlInTenantContext();
 
-        /**
-         * Include soft deleted resources in synced resource queries.
-         *
-         * ResourceSyncing\Listeners\UpdateOrCreateSyncedResource::$scopeGetModelQuery = function (Builder $query) {
-         *     if ($query->hasMacro('withTrashed')) {
-         *         $query->withTrashed();
-         *     }
-         * };
-         */
+        // // Include soft deleted resources in synced resource queries.
+        // ResourceSyncing\Listeners\UpdateOrCreateSyncedResource::$scopeGetModelQuery = function (Builder $query) {
+        //     if ($query->hasMacro('withTrashed')) {
+        //         $query->withTrashed();
+        //     }
+        // };
 
-        /**
-         * To make Livewire v3 work with Tenancy, make the update route universal.
-         *
-         * Livewire::setUpdateRoute(function ($handle) {
-         *     return RouteFacade::post('/livewire/update', $handle)->middleware(['web', 'universal']);
-         * });
-         */
+        // // To make Livewire v3 work with Tenancy, make the update route universal.
+        // Livewire::setUpdateRoute(function ($handle) {
+        //     return Route::post('/livewire/update', $handle)->middleware(['web', 'universal', \Stancl\Tenancy\Tenancy::defaultMiddleware()]);
+        // });
         if (InitializeTenancyByRequestData::inGlobalStack()) {
             TenancyUrlGenerator::$prefixRouteNames = false;
         }
@@ -170,26 +183,34 @@ class TenancyServiceProvider extends ServiceProvider
         }
     }
 
+    /**
+     * Set \Stancl\Tenancy\Bootstrappers\RootUrlBootstrapper::$rootUrlOverride here
+     * to override the root URL used in CLI while in tenant context.
+     *
+     * @see \Stancl\Tenancy\Bootstrappers\RootUrlBootstrapper
+     */
     protected function overrideUrlInTenantContext(): void
     {
-        /**
-         * Import your tenant model!
-         *
-         * \Stancl\Tenancy\Bootstrappers\RootUrlBootstrapper::$rootUrlOverride = function (Tenant $tenant, string $originalRootUrl) {
-         *     $tenantDomain = $tenant instanceof \Stancl\Tenancy\Contracts\SingleDomainTenant
-         *         ? $tenant->domain
-         *         : $tenant->domains->first()->domain;
-         *
-         *     $scheme = str($originalRootUrl)->before('://');
-         *
-         *     // If you're using subdomain identification:
-         *     // $originalDomain = str($originalRootUrl)->after($scheme . '://');
-         *     // return $scheme . '://' . $tenantDomain . '.' . $originalDomain . '/';
-         *
-         *     // If you're using domain identification:
-         *     return $scheme . '://' . $tenantDomain . '/';
-         * };
-         */
+        // \Stancl\Tenancy\Bootstrappers\RootUrlBootstrapper::$rootUrlOverride = function (Tenant $tenant, string $originalRootUrl) {
+        //     $tenantDomain = $tenant instanceof \Stancl\Tenancy\Contracts\SingleDomainTenant
+        //         ? $tenant->domain
+        //         : $tenant->domains->first()->domain;
+        //
+        //     if (is_null($tenantDomain)) {
+        //         return $originalRootUrl;
+        //     }
+        //
+        //     $scheme = str($originalRootUrl)->before('://');
+        //
+        //     if (str_contains($tenantDomain, '.')) {
+        //         // Domain identification
+        //         return $scheme . '://' . $tenantDomain . '/';
+        //     } else {
+        //         // Subdomain identification
+        //         $originalDomain = str($originalRootUrl)->after($scheme . '://')->before('/');
+        //         return $scheme . '://' . $tenantDomain . '.' . $originalDomain . '/';
+        //     }
+        // };
     }
 
     protected function bootEvents()
@@ -209,12 +230,11 @@ class TenancyServiceProvider extends ServiceProvider
     {
         $this->app->booted(function () {
             if (file_exists(base_path('routes/tenant.php'))) {
-                RouteFacade::namespace(static::$controllerNamespace)
+                Route::namespace(static::$controllerNamespace)
                     ->middleware('tenant')
                     ->group(base_path('routes/tenant.php'));
             }
 
-            // Delete this condition when using route-level path identification
             if (tenancy()->globalStackHasMiddleware(config('tenancy.identification.path_identification_middleware'))) {
                 $this->cloneRoutes();
             }
@@ -222,7 +242,9 @@ class TenancyServiceProvider extends ServiceProvider
     }
 
     /**
-     * Clone universal routes as tenant.
+     * Clone routes as tenant.
+     *
+     * This is used primarily for integrating packages.
      *
      * @see CloneRoutesAsTenant
      */
@@ -231,16 +253,7 @@ class TenancyServiceProvider extends ServiceProvider
         /** @var CloneRoutesAsTenant $cloneRoutes */
         $cloneRoutes = $this->app->make(CloneRoutesAsTenant::class);
 
-        /**
-         * You can provide a closure for cloning a specific route, e.g.:
-         * $cloneRoutes->cloneUsing('welcome', function () {
-         *      RouteFacade::get('/tenant-welcome', fn () => 'Current tenant: ' . tenant()->getTenantKey())
-         *          ->middleware(['universal', InitializeTenancyByPath::class])
-         *          ->name('tenant.welcome');
-         * });
-         *
-         * To see the default behavior of cloning the universal routes, check out the cloneRoute() method in CloneRoutesAsTenant.
-         */
+        /** See CloneRoutesAsTenant for usage details. */
         $cloneRoutes->handle();
     }
 

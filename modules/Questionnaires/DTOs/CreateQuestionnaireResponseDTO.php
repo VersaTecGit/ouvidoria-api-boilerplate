@@ -6,8 +6,8 @@ namespace Modules\Questionnaires\DTOs;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\Rule;
+use Modules\Common\Core\DTOs\Concerns\CarbonImmutableCast;
 use WendellAdriel\ValidatedDTO\Casting\ArrayCast;
-use WendellAdriel\ValidatedDTO\Casting\CarbonImmutableCast;
 use WendellAdriel\ValidatedDTO\Casting\StringCast;
 use WendellAdriel\ValidatedDTO\ValidatedDTO;
 

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace Tests\Feature\Tenant;
+
 use Illuminate\Http\Response;
 use Modules\Auth\Support\Permissions;
 use Modules\Tenant\Models\Theme;
@@ -143,9 +145,9 @@ class ThemesApiTest extends AuthenticatedTestCase
         $this->assertEquals(1, $responseMeta['total']);
     }
 
-    //Implement the test_should_create_new_themes method when s3 bucket is configured
+    // Implement the test_should_create_new_themes method when s3 bucket is configured
 
-    //Implement the test_should_validate_create_new_themes method when s3 bucket is configured
+    // Implement the test_should_validate_create_new_themes method when s3 bucket is configured
 
     public function test_should_return_themes_by_uuid(): void
     {

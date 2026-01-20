@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace Tests\Feature\Auth;
+
 use Illuminate\Http\Response;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Support\Permissions;

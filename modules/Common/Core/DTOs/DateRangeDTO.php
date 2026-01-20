@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Modules\Common\Core\DTOs;
 
 use Carbon\CarbonImmutable;
+use Modules\Common\Core\DTOs\Concerns\CarbonImmutableCast;
 use Modules\Common\Core\Support\Formatter;
-use WendellAdriel\ValidatedDTO\Casting\CarbonImmutableCast;
 
 class DateRangeDTO extends DatatableDTO
 {

@@ -1,11 +1,11 @@
 services:
     laravel.test:
         build:
-            context: ./vendor/laravel/sail/runtimes/8.3
+            context: ./vendor/laravel/sail/runtimes/8.4
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
-        image: sail-8.3/app
+        image: sail-8.4/app
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:
@@ -64,18 +64,6 @@ services:
                 - ping
             retries: 3
             timeout: 5s
-    localstack:
-        image: localstack/localstack
-        ports:
-            - "127.0.0.1:4566:4566"
-            - "127.0.0.1:4510-4559:4510-4559"
-        environment:
-            - DEBUG=${DEBUG:-0}
-        volumes:
-            - 'sail-localstack:/var/lib/localstack'
-            - "/var/run/docker.sock:/var/run/docker.sock"
-        networks:
-            - sail
 networks:
     sail:
         driver: bridge
