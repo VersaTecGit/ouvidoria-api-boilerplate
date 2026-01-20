@@ -1,5 +1,5 @@
 # BASE IMAGE
-FROM php:8.2-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 # Dependências básicas
 RUN apk --no-cache add \
@@ -30,7 +30,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     pdo_pgsql \
     exif \
     gd \
-    sockets
+    sockets \
+    pcntl
 
 # Instalar extensões via PECL (imagick e redis)
 RUN pecl install imagick redis \
