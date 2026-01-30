@@ -37,8 +37,8 @@ return new class extends Migration
 
             $table->enum('status', [
                 'pendente',
-                'aprovada',
-                'rejeitada',
+                'aprovado',
+                'rejeitado',
                 'revisao'
             ])->default('pendente');
 

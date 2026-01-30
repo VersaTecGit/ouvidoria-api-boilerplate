@@ -30,7 +30,7 @@ class CreateEmendaDTO extends ValidatedDTO
             'modalidade_id' => 'required|integer|exists:modalidades_transferencias,id',
             'rascunho' => 'required|boolean',
             'tipo_objeto' => 'required|string|max:255|in:saude,educacao,infraestrutura,assistencia_social',
-            'status' => 'required|string|in:pendente,aprovada,rejeitada,revisao',
+            'status' => 'required|string|in:pendente,aprovado,rejeitado,revisao',
             'gnd' => 'required|string|max:10|in:gnd3,gnd4,outro',
             'descricao_objeto' => 'required|string',
             'valor' => 'required|numeric|min:0',
