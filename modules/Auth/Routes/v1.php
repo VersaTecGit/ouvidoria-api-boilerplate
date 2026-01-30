@@ -21,6 +21,9 @@ use Modules\Auth\Controllers\Versa360Controller;
 // Public Routes
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
+    Route::get('teste', function (){
+        return response()->json(['message' => 'Teste OK']);
+    });
     Route::post('refresh', [AuthController::class, 'refresh']);
 
     Route::post('forgot-password', PasswordResetLinkController::class);

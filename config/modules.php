@@ -8,6 +8,7 @@ return [
         'Logs',
     ],
     'Auth',
+    'EmendasParlamentares',
     'DocumentAI',
     'Tenant',
     'Questionnaires',

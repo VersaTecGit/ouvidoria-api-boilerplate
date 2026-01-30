@@ -1,0 +1,28 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Modules\EmendasParlamentares\Models\ModalidadeTransferencia;
+
+class ModalidadesSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        $modalidades = [
+            ['descricao' => 'Disponibilização'],
+            ['descricao' => 'Empenho'],
+            ['descricao' => 'Liquidação'],
+            ['descricao' => 'Pagamento']
+        ];
+
+        foreach ($modalidades as $modalidade) {
+            ModalidadeTransferencia::where('descricao', $modalidade['descricao'])->firstOrCreate($modalidade);
+        }
+    }
+}

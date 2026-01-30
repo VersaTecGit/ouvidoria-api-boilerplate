@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
                 ThemeSeeder::class,
                 UserSeeder::class,
                 PermissionSeeder::class,
+                ModalidadesSeeder::class,
             ]);
         } else {
             $this->call([

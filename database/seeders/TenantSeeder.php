@@ -11,10 +11,14 @@ class TenantSeeder extends Seeder
 {
     public function run(): void
     {
-        Tenant::create([
-            'id' => 'localhost',
-            'name' => 'Test Tenant 1',
-            'modules' => ['portal'],
+        Tenant::updateOrCreate(
+            ['id' => 'localhost'],
+        [
+            'data' => [
+                'id' => 'localhost',
+                'name' => 'Test Tenant 1',
+                'modules' => ['portal'],
+            ],
         ])
             ->domains()
             ->create([
