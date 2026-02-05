@@ -16,7 +16,7 @@ final readonly class FetchEmendasList
     public function handle(DatatableDTO $dto): LengthAwarePaginator|Collection
     {
         $query = Emenda::query()->filtered($this->filters)->all();
-        $query = Datatable::applyFilter($query, $dto, ['numero', 'exercicio', 'tipo_objeto', 'status','responsavel']);
+        $query = Datatable::applyFilter($query, $dto, ['numero', 'exercicio', 'tipo_objeto', 'status','responsavel', 'rascunho', 'concedente.nome', 'recebedor.razao_social']);
         $query = Datatable::applySort($query, $dto);
 
         return Datatable::applyPagination($query, $dto);

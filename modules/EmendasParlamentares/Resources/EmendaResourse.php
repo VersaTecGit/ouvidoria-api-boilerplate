@@ -18,7 +18,10 @@ final class EmendaResourse extends JsonResource
                 'id' => $this->concedente_id,
                 'nome' => $this->concedente->nome,
             ],
-            'recebedor_id' => $this->recebedor_id,
+            'recebedor' => [
+                'id' => $this->recebedor_id,
+                'razao_social' => $this->recebedor->razao_social,
+            ],
             'modalidade_id' => $this->modalidade_id,
             'rascunho' => $this->rascunho,
             'tipo_objeto' => $this->tipo_objeto,

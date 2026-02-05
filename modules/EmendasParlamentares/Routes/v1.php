@@ -12,7 +12,6 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('emendas')->group(function () {
 
         Route::post('/', [EmendaController::class, 'store']);
-        Route::get('/', [EmendaController::class, 'index']);
 
         Route::prefix('eventos-financeiros')->group(function () {
             Route::post('/', [EventoFinanceiroController::class, 'store']);
@@ -38,4 +37,8 @@ Route::middleware('auth:api')->group(function () {
             });
         });
     });
+});
+
+Route::prefix('emendas')->group(function () {
+    Route::get('/', [EmendaController::class, 'index']);
 });

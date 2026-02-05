@@ -14,5 +14,7 @@ final class EmendaFilters extends Filters
         'status' => WhereLikeFilter::class,
         'responsavel' => WhereLikeFilter::class,
         'rascunho' => WhereLikeFilter::class,
+        'concedente.nome' => WhereLikeFilter::class,
+        'recebedor.razao_social' => WhereLikeFilter::class,
     ];
 }
