@@ -15,11 +15,11 @@ final class ModelHasRole extends Model
         'model_id',
     ];
 
-    protected static function members(Builder $query, string $role): Builder
+    public static function members(Builder $query, int $id): Builder
     {
         return $query
             ->leftJoin('roles', 'roles.id', '=', 'model_has_roles.role_id')
-            ->leftJoin('users', 'users.id', '=', 'model_has_roles.model_id')
-            ->where('roles.name', $role);
+            ->leftJoin('operators', 'operators.id', '=', 'model_has_roles.model_id')
+            ->where('roles.id', $id);
     }
 }

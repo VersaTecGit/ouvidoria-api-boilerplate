@@ -8,7 +8,7 @@ use Google\Cloud\DocumentAI\V1\Client\DocumentProcessorServiceClient;
 use Google\Cloud\DocumentAI\V1\Document;
 use Google\Cloud\DocumentAI\V1\ProcessRequest;
 use Google\Cloud\DocumentAI\V1\RawDocument;
-use Google\Protobuf\Internal\RepeatedField;
+use Google\Protobuf\RepeatedField;
 use Illuminate\Support\Facades\Storage;
 use Modules\Common\Core\DTOs\UploadedFileDTO;
 use Modules\Common\Core\Exceptions\ApiException;

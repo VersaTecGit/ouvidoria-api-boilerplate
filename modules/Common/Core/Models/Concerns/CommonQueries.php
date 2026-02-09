@@ -82,7 +82,7 @@ trait CommonQueries
 
     public static function getModelTable(): string
     {
-        return (new static())->getTable();
+        return static::query()->getModel()->getTable();
     }
 
     public function scopeExclude(Builder $query, array $excludeColumns): Builder

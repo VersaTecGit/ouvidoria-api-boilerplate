@@ -25,7 +25,9 @@ abstract class Model extends BaseModel
 
     public static function nullable(): array
     {
-        return (new static())->nullable;
+        $model = static::query()->getModel();
+
+        return $model->nullable;
     }
 
     public static function findByUuid(string $uuid): ?self

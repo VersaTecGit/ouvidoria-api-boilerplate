@@ -12,10 +12,10 @@ use Modules\Common\Core\Support\Datatable;
 
 final readonly class FetchRoleMember
 {
-    public function handle(string $name, DatatableDTO $dto): LengthAwarePaginator|Collection
+    public function handle(int $id, DatatableDTO $dto): LengthAwarePaginator|Collection
     {
         $query = ModelHasRole::query();
-        $query = ModelHasRole::members($query, $name);
+        $query = ModelHasRole::members($query, $id);
         $query = Datatable::applySort($query, $dto);
 
         return Datatable::applyPagination($query, $dto);

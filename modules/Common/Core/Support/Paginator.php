@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Common\Core\Support;
 
+use BadMethodCallException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
@@ -45,6 +46,8 @@ final class Paginator
         if ($name === 'paginate') {
             return $this->handlePaginate(...$arguments);
         }
+
+        throw new BadMethodCallException(sprintf('Method %s::%s does not exist.', self::class, $name));
     }
 
     public static function __callStatic(string $name, array $arguments): mixed
@@ -52,6 +55,8 @@ final class Paginator
         if ($name === 'paginate') {
             return call_user_func_array([new self(...$arguments), 'handlePaginate'], $arguments);
         }
+
+        throw new BadMethodCallException(sprintf('Method %s::%s does not exist.', self::class, $name));
     }
 
     public static function from(Collection $items): Paginator
