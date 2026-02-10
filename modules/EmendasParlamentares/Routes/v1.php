@@ -12,6 +12,7 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('emendas')->group(function () {
 
         Route::post('/', [EmendaController::class, 'store']);
+        Route::put('/{id}', [EmendaController::class, 'update']);
 
         Route::prefix('eventos-financeiros')->group(function () {
             Route::post('/', [EventoFinanceiroController::class, 'store']);
