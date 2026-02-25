@@ -31,6 +31,15 @@ final class EmendaResourse extends JsonResource
             'valor' => $this->valor,
             'responsavel' => $this->responsavel,
             'anuencia_sus' => $this->anuencia_sus,
+            'eventos_financeiros' => $this->eventosFinanceiros()->get()->map(function ($evento) {
+                return [
+                    'id' => $evento->id,
+                    'data' => $evento->data,
+                    'valor' => $evento->valor,
+                    'tipo' => $evento->tipo,
+                    'observacao' => $evento->observacao,
+                ];
+            }),
         ];
     }
 }

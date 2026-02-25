@@ -52,4 +52,9 @@ class Emenda extends Model
     {
         return $query->with(['modalidadeTransferencia', 'concedente', 'recebedor']);
     }
+
+    public function eventosFinanceiros()
+    {
+        return $this->hasMany(EventoFinanceiro::class, 'emenda_id');
+    }
 }
