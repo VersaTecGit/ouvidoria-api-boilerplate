@@ -13,17 +13,46 @@ final readonly class UpdateEmenda
     {
         try {
             DB::beginTransaction();
+
             $emenda = Emenda::findOrFail($id);
-            $emenda->fill($dto->toArray());
+
+            $data = $dto->toArray();
+            $eventosData = $data['eventos_financeiros'] ?? [];
+
+            $agencia = $data['agencia'] ?? null;
+            $contaCorrente = $data['conta_corrente'] ?? null;
+
+            $emenda->fill($data);
             $emenda->save();
 
+            $idsEnviados = collect($eventosData)->pluck('id')->filter()->toArray();
+
+            $emenda->eventosFinanceiros()
+                ->whereNotIn('id', $idsEnviados)
+                ->delete();
+
+            foreach ($eventosData as $eventoItem) {
+                $eventoItem['agencia'] = $agencia;
+                $eventoItem['conta_corrente'] = $contaCorrente;
+
+                if (isset($eventoItem['id']) && $eventoItem['id']) {
+                    $eventoExistente = $emenda->eventosFinanceiros()->find($eventoItem['id']);
+                    if ($eventoExistente) {
+                        $eventoExistente->update($eventoItem);
+                    }
+                } else {
+                    $emenda->eventosFinanceiros()->create($eventoItem);
+                }
+            }
+
             DB::commit();
-            Log::info('Emenda atualizada com sucesso: ' . $emenda->id, $dto->toArray());
-            return $emenda;
+            Log::info('Emenda e Eventos atualizados: ' . $emenda->id);
+
+            return $emenda; // Retorna com os filhos carregados
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erro ao atualizar emenda: ' . $e->getMessage());
+            Log::error('Erro ao atualizar emenda/eventos: ' . $e->getMessage());
             throw $e;
         }
     }

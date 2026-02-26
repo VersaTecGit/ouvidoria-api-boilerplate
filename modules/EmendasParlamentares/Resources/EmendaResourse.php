@@ -10,6 +10,9 @@ final class EmendaResourse extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $eventos = $this->eventosFinanceiros;
+        $primeiroEvento = $eventos->first();
+
         return [
             'id' => $this->id,
             'numero' => $this->numero,
@@ -31,6 +34,8 @@ final class EmendaResourse extends JsonResource
             'valor' => $this->valor,
             'responsavel' => $this->responsavel,
             'anuencia_sus' => $this->anuencia_sus,
+            'agencia' => $primeiroEvento->agencia ?? null,
+            'conta_corrente' => $primeiroEvento->conta_corrente ?? null,
             'eventos_financeiros' => $this->eventosFinanceiros()->get()->map(function ($evento) {
                 return [
                     'id' => $evento->id,

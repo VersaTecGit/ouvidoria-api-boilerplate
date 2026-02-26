@@ -33,6 +33,14 @@ class UpdateEmendaDTO extends ValidatedDTO
             'valor' => 'required|numeric|min:0',
             'responsavel' => 'required|string|max:255',
             'anuencia_sus' => 'nullable|boolean',
+            'agencia' => 'nullable|required_with:eventos_financeiros.*.tipo|string|size:4',
+            'conta_corrente' => 'nullable|required_with:eventos_financeiros.*.tipo|string|max:12',
+            'eventos_financeiros' => 'array',
+            'eventos_financeiros.*.id' => 'nullable|integer|exists:eventos_financeiros,id',
+            'eventos_financeiros.*.data' => 'required|date',
+            'eventos_financeiros.*.valor' => 'required|numeric|min:0',
+            'eventos_financeiros.*.tipo' => 'required|string|in:disponibilizacao,empenho,liquidacao,pagamento',
+            'eventos_financeiros.*.observacao' => 'nullable|string|max:255',
         ];
     }
 

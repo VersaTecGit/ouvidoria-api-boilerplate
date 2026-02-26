@@ -12,6 +12,7 @@ class EventoFinanceiro extends Model
         'agencia',
         'conta_corrente',
         'tipo',
+        'data',
         'valor',
         'observacao',
         'emenda_id'

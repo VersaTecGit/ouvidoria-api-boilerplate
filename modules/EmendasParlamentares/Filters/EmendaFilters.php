@@ -3,6 +3,7 @@
 namespace Modules\EmendasParlamentares\Filters;
 
 use Modules\Common\Core\Filters\Abstracts\Filters;
+use Modules\Common\Core\Filters\WhereFilter;
 use Modules\Common\Core\Filters\WhereLikeFilter;
 
 final class EmendaFilters extends Filters
@@ -13,7 +14,7 @@ final class EmendaFilters extends Filters
         'tipo_objeto' => WhereLikeFilter::class,
         'status' => WhereLikeFilter::class,
         'responsavel' => WhereLikeFilter::class,
-        'rascunho' => WhereLikeFilter::class,
+        'rascunho' => WhereFilter::class,
         'concedente.nome' => WhereLikeFilter::class,
         'recebedor.razao_social' => WhereLikeFilter::class,
     ];
