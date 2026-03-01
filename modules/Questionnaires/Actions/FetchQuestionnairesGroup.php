@@ -10,6 +10,6 @@ final readonly class FetchQuestionnairesGroup
 {
     public function handle(string $uuid): QuestionnairesGroup
     {
-        return QuestionnairesGroup::findByUuid($uuid);
+        return QuestionnairesGroup::findAllByUuid($uuid);
     }
 }

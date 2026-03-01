@@ -26,9 +26,9 @@ final class RoleController extends Controller
         return RoleResource::collection($action->handle($dto))->response();
     }
 
-    public function show(string $role, FetchRole $action): ApiSuccessResponse
+    public function show(int $id, FetchRole $action): ApiSuccessResponse
     {
-        return new ApiSuccessResponse(new RoleResource($action->handle($role)));
+        return new ApiSuccessResponse(new RoleResource($action->handle($id)));
     }
 
     public function store(CreateRoleDTO $dto, CreateRole $action): ApiSuccessResponse
@@ -39,14 +39,14 @@ final class RoleController extends Controller
         );
     }
 
-    public function update(UpdateRoleDTO $dto, string $role, UpdateRole $action): ApiSuccessResponse
+    public function update(UpdateRoleDTO $dto, int $id, UpdateRole $action): ApiSuccessResponse
     {
-        return new ApiSuccessResponse(new RoleResource($action->handle($role, $dto)));
+        return new ApiSuccessResponse(new RoleResource($action->handle($id, $dto)));
     }
 
-    public function destroy(string $role, DeleteRole $action): NoContentResponse
+    public function destroy(int $id, DeleteRole $action): NoContentResponse
     {
-        $action->handle($role);
+        $action->handle($id);
 
         return new NoContentResponse();
     }

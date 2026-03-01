@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Questionnaires\DTOs;
 
+use Illuminate\Validation\Rule;
 use Modules\Common\Core\DTOs\UploadedFileDTO;
 use WendellAdriel\ValidatedDTO\Casting\DTOCast;
 use WendellAdriel\ValidatedDTO\Casting\StringCast;
@@ -20,6 +21,7 @@ class FileUploadElementDTO extends ValidatedDTO
         return [
             'fileName' => ['required', 'string'],
             'file' => ['required', 'array'],
+            'file.extension' => ['required', 'string', Rule::in(config('file-extensions.allowed'))],
         ];
     }
 

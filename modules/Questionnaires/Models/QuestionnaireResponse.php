@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Modules\Questionnaires\Models;
 
-use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Common\Core\Models\Model;
 use Spatie\MediaLibrary\HasMedia;
@@ -38,11 +37,6 @@ final class QuestionnaireResponse extends Model implements HasMedia
     public function questionnaire(): BelongsTo
     {
         return $this->belongsTo(Questionnaire::class);
-    }
-
-    public function scopeAll(Builder $query): Builder
-    {
-        return $query;
     }
 
     public function registerMediaCollections(): void

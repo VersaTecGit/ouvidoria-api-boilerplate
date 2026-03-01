@@ -18,71 +18,69 @@ class PermissionSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $this->createPermissions($this->getPermissions());
-
         $this->createRoles($this->getRoles());
-
         $this->assignPermissionsToRoles();
-
         $this->assignRolesToUsers();
     }
 
     private function getPermissions(): Collection
     {
-        return collect(Permissions::all())
-            ->transform(function (Permissions $permission) {
-                return [
-                    'name' => $permission->value,
-                    'description' => $permission->description(),
-                ];
-            });
+        return collect(Permissions::all())->map(fn (Permissions $permission) => [
+            'name' => $permission->value,
+            'description' => $permission->description(),
+        ]);
     }
 
     private function createPermissions(Collection $permissions): void
     {
-        $permissions->each(function (array $permission) {
-            $permission = app(config('permission.models.permission'))->make($permission);
-            $permission->saveOrFail();
+        $model = app(config('permission.models.permission'));
+
+        $permissions->each(function (array $permission) use ($model) {
+            $model::updateOrCreate(
+                ['name' => $permission['name']],
+                ['description' => $permission['description']]
+            );
         });
     }
 
     private function getRoles(): Collection
     {
-        return collect(DefaultRoles::all())
-            ->transform(function (DefaultRoles $role) {
-                return [
-                    'name' => $role->value,
-                    'description' => $role->description(),
-                ];
-            });
+        return collect(DefaultRoles::all())->map(fn (DefaultRoles $role) => [
+            'name' => $role->value,
+            'description' => $role->description(),
+        ]);
     }
 
     private function createRoles(Collection $roles): void
     {
-        $roles->each(function (array $role) {
-            $role = app(config('permission.models.role'))->make($role);
-            $role->saveOrFail();
+        $model = app(config('permission.models.role'));
+
+        $roles->each(function (array $role) use ($model) {
+            $model::withoutGlobalScopes()->updateOrCreate(
+                ['name' => $role['name']],
+                ['description' => $role['description']]
+            );
         });
     }
 
     private function assignPermissionsToRoles(): void
     {
-        $roles = $this->getRoles()->filter(fn (array $role) => $role['name'] !== DefaultRoles::SUPER_ADMIN->value);
+        $roles = $this->getRoles()->reject(fn ($r) => $r['name'] === DefaultRoles::SUPER_ADMIN->value);
 
-        $roles->each(function (array $role) {
-            $role = app(config('permission.models.role'))->where('name', $role['name'])->first();
+        $roles->each(function (array $roleData) {
+            $role = app(config('permission.models.role'))::where('name', $roleData['name'])->first();
+            $permissions = collect(DefaultRoles::from($role->name)->permissions())
+                ->map(fn (Permissions $perm) => app(config('permission.models.permission'))::where('name', $perm->value)->first())
+                ->filter();
 
-            $permissions = DefaultRoles::from($role['name'])->permissions();
-
-            $permissions = collect($permissions)
-                ->map(fn (Permissions $permission) => app(config('permission.models.permission'))->where('name', $permission->value)->first());
-
-            $role->givePermissionTo($permissions);
+            $role->syncPermissions($permissions);
         });
     }
 
     private function assignRolesToUsers(): void
     {
-        $User = User::where('login', DefaultRoles::ADMIN->value)->first();
-        $User->assignRole(DefaultRoles::ADMIN->value);
+        if ($user = User::where('login', 'admin')->first()) {
+            $user->assignRole(DefaultRoles::ADMIN->value);
+        }
     }
 }

@@ -10,6 +10,6 @@ final readonly class FetchQuestionnaireResponse
 {
     public function handle(string $uuid): QuestionnaireResponse
     {
-        return QuestionnaireResponse::findByUuid($uuid);
+        return QuestionnaireResponse::findAllByUuid($uuid);
     }
 }

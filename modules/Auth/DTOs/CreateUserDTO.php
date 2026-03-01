@@ -6,6 +6,10 @@ namespace Modules\Auth\DTOs;
 
 use Illuminate\Validation\Rules\Password;
 use Modules\Auth\Models\Role;
+use Modules\Transport\DTOs\DriverDTO;
+use WendellAdriel\ValidatedDTO\Casting\ArrayCast;
+use WendellAdriel\ValidatedDTO\Casting\DTOCast;
+use WendellAdriel\ValidatedDTO\Casting\StringCast;
 use WendellAdriel\ValidatedDTO\ValidatedDTO;
 
 final class CreateUserDTO extends ValidatedDTO
@@ -22,6 +26,8 @@ final class CreateUserDTO extends ValidatedDTO
 
     public array $extra_permissions;
 
+    public ?DriverDTO $driver;
+
     protected function rules(): array
     {
         return [
@@ -33,24 +39,28 @@ final class CreateUserDTO extends ValidatedDTO
                 Password::min(8)->max(255),
                 'confirmed',
             ],
-            'role' => ['sometimes', 'string', 'exists:roles,name', 'not_in:super-admin'],
+            'role' => ['required', 'int', 'exists:roles,id', 'not_in:1'],
             'extra_permissions' => ['sometimes', 'array'],
             'extra_permissions.*' => ['exists:permissions,name'],
+            'driver' => ['sometimes', 'nullable', 'array'],
         ];
     }
 
     protected function defaults(): array
     {
-        return [
-            'role' => 'user',
-            'extra_permissions' => [],
-        ];
+        return [];
     }
 
     protected function casts(): array
     {
         return [
-            'role' => fn (string $property, mixed $value) => Role::findByName($value),
+            'name' => new StringCast(),
+            'login' => new StringCast(),
+            'email' => new StringCast(),
+            'password' => new StringCast(),
+            'role' => fn (string $property, mixed $value) => Role::findById($value),
+            'extra_permissions' => new ArrayCast(new StringCast()),
+            'driver' => new DTOCast(DriverDTO::class),
         ];
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Common\Core\Models;
 
+use Dyrynda\Database\Support\CascadeSoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model as BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Common\Core\Models\Concerns\CommonQueries;
@@ -14,7 +16,8 @@ use Modules\Common\Core\Models\Concerns\UserActions;
 
 abstract class Model extends BaseModel
 {
-    use CommonQueries,
+    use CascadeSoftDeletes,
+        CommonQueries,
         Filterable,
         HasUuids,
         LogChanges,
@@ -22,6 +25,8 @@ abstract class Model extends BaseModel
         UserActions;
 
     protected $nullable = [];
+
+    protected $cascadeDeletes = [];
 
     public static function nullable(): array
     {
@@ -33,5 +38,15 @@ abstract class Model extends BaseModel
     public static function findByUuid(string $uuid): ?self
     {
         return static::where('uuid', $uuid)->firstOrFail();
+    }
+
+    public static function findAllByUuid(string $uuid): ?self
+    {
+        return static::where('uuid', $uuid)->all()->firstOrFail();
+    }
+
+    public function scopeAll(Builder $query): Builder
+    {
+        return $query;
     }
 }

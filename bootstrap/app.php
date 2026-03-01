@@ -9,17 +9,23 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Modules\Common\Core\Commands\DeleteBucketTempFiles;
 use Modules\Common\Core\Exceptions\ApiException;
 use Modules\Common\Core\Exceptions\Exception as CoreException;
 use Modules\Common\Logs\Commands\DeleteOldAccessLogs;
 use Modules\Tenant\Jobs\InactiveStatusAds;
+use Modules\Tenant\Middleware\InitializeTenancyByRequestData;
+use Modules\Transport\Jobs\AlertUsersAboutCnhExpiration;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         // web: __DIR__.'/../routes/web.php',
         // commands: __DIR__.'/../routes/console.php',
+        // channels: __DIR__ . '/../routes/channels.php',
         health: '/up',
+    )
+    ->withBroadcasting(
+        __DIR__ . '/../routes/channels.php',
+        ['middleware' => ['tenant', 'api', InitializeTenancyByRequestData::class, 'auth']],
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
@@ -64,11 +70,15 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withCommands([
         DeleteOldAccessLogs::class,
-        DeleteBucketTempFiles::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         $schedule->call(new InactiveStatusAds())
             ->name('inactive-ads-based-on-end-date')
+            ->daily()
+            ->onOneServer();
+
+        $schedule->call(new AlertUsersAboutCnhExpiration())
+            ->name('alert-users-about-cnh-expiration')
             ->daily()
             ->onOneServer();
 

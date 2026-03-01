@@ -10,9 +10,9 @@ final readonly class FetchRolePermissionsList
 {
     public function __construct(private FetchRole $fetchRole) {}
 
-    public function handle(string $role): Collection
+    public function handle(int $id): Collection
     {
-        $role = $this->fetchRole->handle($role);
+        $role = $this->fetchRole->handle($id);
 
         return $role->permissions;
     }

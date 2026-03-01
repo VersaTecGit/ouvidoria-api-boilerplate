@@ -26,7 +26,7 @@ class QuestionnaireElementDTO extends ValidatedDTO
     protected function rules(): array
     {
         return [
-            'id' => ['required', 'string', 'uuid'],
+            'id' => ['required', 'string'],
             'type' => ['required', 'string', Rule::in(QuestionnaireElementType::all())],
             'extraAttributes' => ['sometimes', 'array'],
             'row' => ['required', 'integer'],

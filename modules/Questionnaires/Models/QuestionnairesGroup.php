@@ -37,13 +37,25 @@ final class QuestionnairesGroup extends Model implements Sortable
         'icon',
     ];
 
-    public function scopeActive(Builder $query): Builder
+    protected $cascadeDeletes = [
+        'questionnaires',
+    ];
+
+    public function scopeAll(Builder $query): Builder
     {
-        return $query->where('active', true);
+        return $query->withoutGlobalScope('active-questionnaires-groups');
     }
 
     public function questionnaires(): HasMany
     {
         return $this->hasMany(Questionnaire::class);
+    }
+
+    protected static function booted(): void
+    {
+        self::addGlobalScope(
+            'active-questionnaires-groups',
+            fn (Builder $builder) => $builder->where('active', true)
+        );
     }
 }

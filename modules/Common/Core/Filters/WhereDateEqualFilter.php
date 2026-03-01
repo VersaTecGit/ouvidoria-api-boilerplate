@@ -11,6 +11,6 @@ class WhereDateEqualFilter extends Filter
 {
     public function apply(Builder $builder, mixed $value, string $filter): Builder
     {
-        return $builder->whereDate('created_at', $value);
+        return $builder->whereDate($filter, $value);
     }
 }

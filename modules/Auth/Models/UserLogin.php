@@ -15,8 +15,8 @@ final class UserLogin extends Model
         'user_agent',
     ];
 
-    public function User(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withoutGlobalScope('active-users');
     }
 }

@@ -9,8 +9,6 @@ use Modules\Common\Core\Exceptions\ApiException;
 
 final readonly class FetchVersa360Client
 {
-    public function __construct(private LoggedUser $loggedUser) {}
-
     public function handle(): array
     {
         $credentials = tenant()->versa360Credential;
@@ -27,7 +25,7 @@ final readonly class FetchVersa360Client
         $clientResponse = Http::withToken($token)->get('https://api.versa360.com.br/v1/clients/me')->json();
 
         if (! $clientResponse['status']) {
-            throw new ApiException('Failed to fetch client data from Versa360');
+            throw new ApiException('Falha ao buscar cliente do Versa360');
         }
 
         return $clientResponse['result'];

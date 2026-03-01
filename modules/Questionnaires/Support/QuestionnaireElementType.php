@@ -90,7 +90,16 @@ enum QuestionnaireElementType: string
             self::FILE_UPLOAD_FIELD => is_string($answer) && (function ($answer) {
                 $decodedAnswer = json_decode($answer, true);
 
-                FileUploadElementDTO::fromArray($decodedAnswer);
+                if (! is_array($decodedAnswer)) {
+                    return FileUploadElementDTO::fromArray($decodedAnswer);
+                }
+
+                foreach ($decodedAnswer as $fileItem) {
+                    if (isset($fileItem['uuid'])) {
+                        continue;
+                    }
+                    FileUploadElementDTO::fromArray($fileItem);
+                }
 
                 return true;
             })($answer),

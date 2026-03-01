@@ -10,10 +10,12 @@ use Modules\Common\Core\Filters\WhereDateEqualFilter;
 use Modules\Common\Core\Filters\WhereDateGreaterFilter;
 use Modules\Common\Core\Filters\WhereDateLessFilter;
 use Modules\Common\Core\Filters\WhereLikeFilter;
+use Modules\Common\Core\Filters\WhereNullFilter;
 
 final class UserFilters extends Filters
 {
     protected array $filters = [
+        'driver' => WhereNullFilter::class,
         'name' => WhereLikeFilter::class,
         'email' => WhereLikeFilter::class,
         'login' => WhereLikeFilter::class,

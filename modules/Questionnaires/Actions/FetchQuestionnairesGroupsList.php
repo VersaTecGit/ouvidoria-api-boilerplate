@@ -17,7 +17,7 @@ final readonly class FetchQuestionnairesGroupsList
 
     public function handle(DatatableDTO $dto): LengthAwarePaginator|Collection
     {
-        $query = QuestionnairesGroup::filtered($this->filters)->ordered();
+        $query = QuestionnairesGroup::filtered($this->filters)->all()->ordered();
 
         $query = Datatable::applyFilter($query, $dto, ['title', 'description']);
         $query = Datatable::applySort($query, $dto);

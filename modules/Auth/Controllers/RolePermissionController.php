@@ -14,14 +14,14 @@ use Modules\Common\Core\Responses\NoContentResponse;
 
 final class RolePermissionController extends Controller
 {
-    public function index(string $role, FetchRolePermissionsList $action): JsonResponse
+    public function index(int $id, FetchRolePermissionsList $action): JsonResponse
     {
-        return PermissionResource::collection($action->handle($role))->response();
+        return PermissionResource::collection($action->handle($id))->response();
     }
 
-    public function store(SyncRolePermissionsDTO $dto, string $role, SyncRolePermissions $action): NoContentResponse
+    public function store(SyncRolePermissionsDTO $dto, int $id, SyncRolePermissions $action): NoContentResponse
     {
-        $action->handle($role, $dto);
+        $action->handle($id, $dto);
 
         return new NoContentResponse();
     }

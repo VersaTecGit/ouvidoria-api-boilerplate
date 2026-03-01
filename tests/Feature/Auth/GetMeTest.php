@@ -48,7 +48,6 @@ class GetMeTest extends AuthenticatedTestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(['id', 'name', 'email', 'login', 'roles', 'permissions']);
         $response->assertJsonFragment([
-            'roles' => ['test-role'],
             'permissions' => [Permissions::LIST_USERS->value, Permissions::CREATE_USERS->value],
         ]);
     }

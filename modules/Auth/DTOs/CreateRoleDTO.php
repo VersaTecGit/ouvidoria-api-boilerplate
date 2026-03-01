@@ -10,13 +10,13 @@ final class CreateRoleDTO extends ValidatedDTO
 {
     public string $name;
 
-    public string $description;
+    public ?string $description;
 
     protected function rules(): array
     {
         return [
-            'name' => ['sometimes', 'string', 'min:4', 'unique:roles,name', 'max:255'],
-            'description' => ['sometimes', 'string', 'max:255'],
+            'name' => ['required', 'string', 'min:4', 'unique:roles,name', 'max:255'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:255'],
         ];
     }
 

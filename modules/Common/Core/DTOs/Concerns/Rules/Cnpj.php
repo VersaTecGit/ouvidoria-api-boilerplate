@@ -16,6 +16,10 @@ class Cnpj implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        if (is_null($value) || $value === '') {
+            return;
+        }
+
         $c = preg_replace('/\D/', '', $value);
 
         $b = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];

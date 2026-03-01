@@ -7,6 +7,7 @@ namespace Modules\Auth\Actions;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -28,8 +29,12 @@ final readonly class Login
     {
         $this->ensureIsNotRateLimited();
 
-        $token = Auth::attempt($dto->toArray());
-        if (! $token) {
+        $user = User::query()->where('login', $dto->login)->orWhere(
+            'email',
+            $dto->login
+        )->first();
+
+        if (! $user || ! Hash::check($dto->password, $user->password)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -39,13 +44,22 @@ final readonly class Login
 
         RateLimiter::clear($this->throttleKey());
 
-        /** @var \Modules\Auth\Models\User $user */
-        $user = Auth::user();
+        if ($user->two_factor_secret && $user->two_factor_confirmed_at) {
+            return [
+                'two_factor_required' => true,
+                'uuid' => $user->uuid,
+            ];
+        }
+
+        $token = Auth::guard('api')->login($user);
+
         $this->recordLogin($user);
+
+        $redirect = null;
+        $forceChangePassword = null;
 
         if ($user->isFirstLogin()) {
             $user->markAsNotFirstLogin();
-
             $redirect = $this->settings->redirect_on_first_login_path;
             $forceChangePassword = $this->settings->force_change_password_on_first_login;
         }
@@ -55,8 +69,8 @@ final readonly class Login
         return [
             'type' => self::TOKEN_TYPE,
             'token' => $token,
-            'redirect' => $redirect ?? null,
-            'force_change_password' => $forceChangePassword ?? null,
+            'redirect' => $redirect,
+            'force_change_password' => $forceChangePassword,
         ];
     }
 

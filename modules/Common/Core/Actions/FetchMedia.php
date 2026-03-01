@@ -10,6 +10,6 @@ final readonly class FetchMedia
 {
     public function handle(string $uuid): Media
     {
-        return Media::with('model')->findByUuid($uuid);
+        return Media::with('model')->findAllByUuid($uuid);
     }
 }

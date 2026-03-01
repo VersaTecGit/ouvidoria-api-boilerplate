@@ -19,7 +19,7 @@ final class ModelHasRole extends Model
     {
         return $query
             ->leftJoin('roles', 'roles.id', '=', 'model_has_roles.role_id')
-            ->leftJoin('operators', 'operators.id', '=', 'model_has_roles.model_id')
+            ->leftJoin('users', 'users.id', '=', 'model_has_roles.model_id')
             ->where('roles.id', $id);
     }
 }

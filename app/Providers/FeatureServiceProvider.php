@@ -13,13 +13,11 @@ final class FeatureServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        Feature::extend('redis', function (Application $app) {
-            return new RedisFeatureDriver(
-                $app->make('redis'),
-                $app->make('events'),
-                []
-            );
-        });
+        Feature::extend('redis', fn (Application $app) => new RedisFeatureDriver(
+            $app->make('redis'),
+            $app->make('events'),
+            []
+        ));
 
         Feature::resolveScopeUsing(fn () => tenant());
     }

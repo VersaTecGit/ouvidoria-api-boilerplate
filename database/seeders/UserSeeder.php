@@ -12,34 +12,13 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::where('login', 'admin')->first();
+        $hasUser = User::count() > 0;
 
-        if ($user) {
-            $user->update([
-                'name' => 'Admin',
-                'password' => Hash::make('password'),
-            ]);
-        } else {
-            $user = User::create([
-                'name' => 'Admin',
+        if (! $hasUser) {
+            $operator = User::create([
+                'name' => 'Administrador',
                 'login' => 'admin',
                 'email' => 'admin@example.com',
-                'password' => Hash::make('password'),
-            ]);
-        }
-
-        $user = User::where('login', 'user')->first();
-
-        if ($user) {
-            $user->update([
-                'name' => 'User',
-                'password' => Hash::make('password'),
-            ]);
-        } else {
-            User::create([
-                'name' => 'User',
-                'login' => 'user',
-                'email' => 'user@example.com',
                 'password' => Hash::make('password'),
             ]);
         }

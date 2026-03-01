@@ -10,6 +10,6 @@ final readonly class FetchUser
 {
     public function handle(string $uuid): User
     {
-        return User::where('uuid', $uuid)->all()->firstOrFail();
+        return User::findAllByUuid($uuid);
     }
 }

@@ -19,6 +19,16 @@ class CommonServiceProvider extends ServiceProvider
 
     private function bootSignedStorage(): void
     {
-        Gate::define('uploadFiles', fn (User $user, string $bucket) => true);
+        Gate::define('uploadFiles', function (?User $user, ?string $bucket): bool {
+            if (request()->attributes->get('is_microservice') === true) {
+                return true;
+            }
+
+            if ($user instanceof User) {
+                return true;
+            }
+
+            return false;
+        });
     }
 }

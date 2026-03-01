@@ -6,7 +6,9 @@ namespace Modules\Auth\Actions;
 
 use Illuminate\Database\Eloquent\Collection;
 use Modules\Auth\Models\Permission;
+use Modules\Auth\Support\DefaultRoles;
 use Modules\Auth\Support\PermissionGroups;
+use Modules\Auth\Support\Permissions;
 
 final readonly class FetchPermissionsModulesList
 {
@@ -19,27 +21,55 @@ final readonly class FetchPermissionsModulesList
         ];
     }
 
+    /**
+     * @param  \Illuminate\Database\Eloquent\Collection<int, \Modules\Auth\Models\Permission>  $permissions
+     */
     private function getModules(Collection $permissions): array
     {
         $modules = PermissionGroups::modules();
 
-        foreach ($modules as $key => $module) {
-            $groups = $module['groups'];
-            foreach ($groups as $groupKey => $group) {
-                $complete_key = $module['name'] . ':' . $group;
-                $filteredPermissions = $permissions->filter(fn ($permission) => PermissionGroups::fromPermission($permission->name)->value === $complete_key);
+        $permissionsByGroup = [];
 
-                $modules[$key]['groups'][$groupKey] = [
-                    'name' => $group,
-                    'permissions' => $filteredPermissions->map(fn ($permission) => [
-                        'name' => $permission->name,
-                        'description' => $permission->description,
-                    ])->toArray(),
+        foreach ($permissions as $permission) {
+            $group = PermissionGroups::fromPermission($permission->name)->value;
+
+            $permissionsByGroup[$group][] = $permission;
+        }
+
+        $roles = DefaultRoles::all();
+
+        $rolesByPermission = [];
+
+        foreach ($roles as $role) {
+            foreach ($role->permissions() as $p) {
+                $rolesByPermission[$p->value][] = $role->value;
+            }
+        }
+
+        foreach ($modules as $mKey => $module) {
+            foreach ($module['groups'] as $gKey => $groupInfo) {
+
+                $completeKey = $module['name'] . ':' . $groupInfo['name'];
+
+                $groupPermissions = $permissionsByGroup[$completeKey] ?? [];
+
+                $modules[$mKey]['groups'][$gKey] = [
+                    'name' => $groupInfo['name'],
+                    'description' => $groupInfo['description'],
+                    'permissions' => array_map(function ($permission) use ($rolesByPermission) {
+                        $permissionEnum = Permissions::tryFrom($permission->name);
+
+                        return [
+                            'name' => $permission->name,
+                            'description' => $permission->description,
+                            'detail' => $permissionEnum?->detail(),
+                            'default_roles' => $rolesByPermission[$permission->name] ?? [],
+                        ];
+                    }, $groupPermissions),
                 ];
             }
         }
 
         return $modules;
-
     }
 }

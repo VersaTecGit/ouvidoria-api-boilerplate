@@ -8,7 +8,7 @@ return [
         'Logs',
     ],
     'Auth',
-    'DocumentAI',
     'Tenant',
     'Questionnaires',
+    'Transport',
 ];

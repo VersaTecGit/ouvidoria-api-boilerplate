@@ -16,7 +16,7 @@ final class SyncUserRolesDTO extends ValidatedDTO
     {
         return [
             'roles' => ['required', 'array'],
-            'roles.*' => ['exists:roles,name'],
+            'roles.*' => ['exists:roles,id'],
             'extra_permissions' => ['sometimes', 'array'],
             'extra_permissions.*' => ['exists:permissions,name'],
         ];

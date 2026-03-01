@@ -5,11 +5,17 @@ declare(strict_types=1);
 namespace Modules\Auth\DTOs;
 
 use Illuminate\Validation\Rules\Password;
+use Modules\Common\Core\DTOs\Concerns\Utils;
+use Modules\Transport\DTOs\DriverDTO;
 use WendellAdriel\ValidatedDTO\Casting\BooleanCast;
+use WendellAdriel\ValidatedDTO\Casting\DTOCast;
+use WendellAdriel\ValidatedDTO\Casting\StringCast;
 use WendellAdriel\ValidatedDTO\ValidatedDTO;
 
 final class UpdateUserDTO extends ValidatedDTO
 {
+    use Utils;
+
     public ?string $name;
 
     public ?string $login;
@@ -20,7 +26,7 @@ final class UpdateUserDTO extends ValidatedDTO
 
     public ?string $password;
 
-    public bool $active;
+    public ?DriverDTO $driver;
 
     protected function rules(): array
     {
@@ -35,6 +41,7 @@ final class UpdateUserDTO extends ValidatedDTO
                 'confirmed',
             ],
             'active' => ['sometimes', 'boolean'],
+            'driver' => ['sometimes', 'nullable', 'array'],
         ];
     }
 
@@ -46,7 +53,13 @@ final class UpdateUserDTO extends ValidatedDTO
     protected function casts(): array
     {
         return [
+            'name' => new StringCast(),
+            'login' => new StringCast(),
+            'email' => new StringCast(),
+            'current_password' => new StringCast(),
+            'password' => new StringCast(),
             'active' => new BooleanCast(),
+            'driver' => new DTOCast(DriverDTO::class),
         ];
     }
 }

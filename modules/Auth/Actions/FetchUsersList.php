@@ -20,7 +20,10 @@ final readonly class FetchUsersList
 
     public function handle(DatatableDTO $dto): LengthAwarePaginator|Collection
     {
-        $query = User::query()->filtered($this->filters)->all();
+        $query = User::query()->with([
+            'roles',
+            'latestLogin',
+        ])->filtered($this->filters)->all();
         $query = Datatable::applyFilter($query, $dto, ['login', 'email', 'name']);
         $query = Datatable::applySort($query, $dto);
 

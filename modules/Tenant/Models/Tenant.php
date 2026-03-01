@@ -28,7 +28,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     protected function modules(): Attribute
     {
         return Attribute::make(
-            get: fn (array $value) => collect($value)
+            get: fn (?array $value) => collect($value ?? []),
         );
     }
 }

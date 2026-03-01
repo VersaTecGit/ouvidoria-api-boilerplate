@@ -40,7 +40,6 @@ class CreateAnswerDTO extends ValidatedDTO
     {
         return [
             'content' => [],
-            'user_id' => '',
             'justification' => '',
             'status' => 'pending',
         ];

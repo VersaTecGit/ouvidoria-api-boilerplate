@@ -16,16 +16,14 @@ final readonly class SendPasswordResetLink
 {
     public function handle(SendPasswordResetLinkDTO $dto): string
     {
-        ResetPassword::toMailUsing(function (User $user, string $token) use ($dto) {
-            return (new MailMessage())
-                ->subject('Recuperação de Senha')
-                ->view('emails.reset-password', [
-                    'url' => $dto->callback_url . "{$token}?login={$user->login}",
-                    'user' => $user,
-                    'tenant' => tenant(),
-                    'theme' => Theme::active(),
-                ]);
-        });
+        ResetPassword::toMailUsing(fn (User $user, string $token) => (new MailMessage())
+            ->subject('Recuperação de Senha')
+            ->view('emails.reset-password', [
+                'url' => $dto->callback_url . "{$token}?login={$user->login}",
+                'user' => $user,
+                'tenant' => tenant(),
+                'theme' => Theme::active(),
+            ]));
 
         $status = Password::sendResetLink(['login' => $dto->login]);
 

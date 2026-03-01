@@ -6,15 +6,20 @@ namespace Modules\Questionnaires\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Common\Core\Resources\Concerns\LoadsRelationsIfMissing;
 use Modules\Questionnaires\Models\Questionnaire;
 
 final class QuestionnaireResource extends JsonResource
 {
+    use LoadsRelationsIfMissing;
+
     public function toArray(Request $request): array
     {
+        $group = $this->loadIfMissing('questionnairesGroup');
+
         return [
             'id' => $this->uuid,
-            'questionnaires_group_id' => $this->questionnairesGroup->uuid,
+            'questionnaires_group_id' => $group->uuid,
             'title' => $this->title,
             'description' => $this->description,
             'icon' => $this->icon,

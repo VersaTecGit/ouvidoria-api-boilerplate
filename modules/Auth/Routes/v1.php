@@ -14,6 +14,7 @@ use Modules\Auth\Controllers\RoleController;
 use Modules\Auth\Controllers\RoleMemberController;
 use Modules\Auth\Controllers\RolePermissionController;
 use Modules\Auth\Controllers\SettingsController;
+use Modules\Auth\Controllers\TwoFactorController;
 use Modules\Auth\Controllers\UserController;
 use Modules\Auth\Controllers\UserRoleController;
 use Modules\Auth\Controllers\Versa360Controller;
@@ -21,6 +22,7 @@ use Modules\Auth\Controllers\Versa360Controller;
 // Public Routes
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
+    Route::post('login/2fa', [AuthController::class, 'loginWithTwoFactor']);
     Route::post('refresh', [AuthController::class, 'refresh']);
 
     Route::post('forgot-password', PasswordResetLinkController::class);
@@ -30,6 +32,13 @@ Route::prefix('auth')->group(function () {
 // Protected Routes
 Route::middleware('auth')->group(function () {
     Route::prefix('auth')->group(function () {
+        Route::prefix('2fa')->group(function () {
+            Route::post('enable', [TwoFactorController::class, 'store']);
+            Route::post('confirm', [TwoFactorController::class, 'confirm']);
+            Route::delete('disable', [TwoFactorController::class, 'destroy']);
+            Route::post('regenerate', [TwoFactorController::class, 'regenerate']);
+        });
+
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('me', [AuthController::class, 'user']);
 
@@ -72,7 +81,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [RoleController::class, 'index'])->can('ALL-list-roles');
         Route::post('/', [RoleController::class, 'store'])->can('ALL-create-roles');
 
-        Route::prefix('{role}')->group(function () {
+        Route::prefix('{id}')->group(function () {
             Route::get('/', [RoleController::class, 'show'])->can('ALL-view-roles');
 
             Route::put('/', [RoleController::class, 'update'])->can('ALL-edit-roles');

@@ -14,7 +14,7 @@ final readonly class FetchUsersCounts
         $grouped = User::query()
             ->all()
             ->get()
-            ->groupBy(fn (User $User) => $User->active ? 'active' : 'inactive')
+            ->groupBy(fn (User $user) => $user->active ? 'active' : 'inactive')
             ->mapWithKeys(fn (Collection $group, string $key) => [$key => $group->count()]);
 
         $grouped->when(

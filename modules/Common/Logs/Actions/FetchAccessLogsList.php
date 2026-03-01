@@ -23,7 +23,7 @@ final readonly class FetchAccessLogsList
         $query = AccessLog::query()->filtered($this->filters)->all();
         $query = DateRangeDatatable::applyFilter($query, $dto, ['message', 'action', 'user_name']);
         $query = DateRangeDatatable::applySort($query, $dto);
-        $query = DateRangeDatatable::applyDateRangeFilter($query, $dto, 'created_at');
+        $query = DateRangeDatatable::applyDateRangeFilter($query, $dto, 'access_logs.created_at');
 
         if ($dto->log) {
             AccessLogHelper::log(

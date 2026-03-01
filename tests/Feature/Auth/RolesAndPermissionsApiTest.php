@@ -37,7 +37,7 @@ class RolesAndPermissionsApiTest extends AuthenticatedTestCase
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::LIST_ROLES->value]);
 
-        foreach (range(1, 8) as $number) {
+        foreach (range(1, 10) as $number) {
             RolesAndPermissionsHelper::createTestRole();
         }
 
@@ -57,19 +57,19 @@ class RolesAndPermissionsApiTest extends AuthenticatedTestCase
         $responseMeta = $response->json('meta');
 
         $this->assertIsArray($responseData);
-        $this->assertCount(10, $responseData);
+        $this->assertCount(12, $responseData);
 
         $this->assertEquals(1, $responseMeta['current_page']);
         $this->assertEquals(1, $responseMeta['last_page']);
         $this->assertEquals(20, $responseMeta['per_page']);
-        $this->assertEquals(10, $responseMeta['total']);
+        $this->assertEquals(12, $responseMeta['total']);
     }
 
     public function test_should_return_roles_page_2(): void
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::LIST_ROLES->value]);
 
-        foreach (range(1, 28) as $number) {
+        foreach (range(1, 30) as $number) {
             RolesAndPermissionsHelper::createTestRole();
         }
 
@@ -89,19 +89,19 @@ class RolesAndPermissionsApiTest extends AuthenticatedTestCase
         $responseMeta = $response->json('meta');
 
         $this->assertIsArray($responseData);
-        $this->assertCount(10, $responseData);
+        $this->assertCount(12, $responseData);
 
         $this->assertEquals(2, $responseMeta['current_page']);
         $this->assertEquals(2, $responseMeta['last_page']);
         $this->assertEquals(20, $responseMeta['per_page']);
-        $this->assertEquals(30, $responseMeta['total']);
+        $this->assertEquals(32, $responseMeta['total']);
     }
 
     public function test_should_return_roles_with_total_per_page(): void
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::LIST_ROLES->value]);
 
-        foreach (range(1, 28) as $number) {
+        foreach (range(1, 30) as $number) {
             RolesAndPermissionsHelper::createTestRole();
         }
 
@@ -124,9 +124,9 @@ class RolesAndPermissionsApiTest extends AuthenticatedTestCase
         $this->assertCount(5, $responseData);
 
         $this->assertEquals(1, $responseMeta['current_page']);
-        $this->assertEquals(6, $responseMeta['last_page']);
+        $this->assertEquals(7, $responseMeta['last_page']);
         $this->assertEquals(5, $responseMeta['per_page']);
-        $this->assertEquals(30, $responseMeta['total']);
+        $this->assertEquals(32, $responseMeta['total']);
     }
 
     public function test_should_return_roles_with_filter(): void
@@ -190,7 +190,7 @@ class RolesAndPermissionsApiTest extends AuthenticatedTestCase
         $role = RolesAndPermissionsHelper::createTestRole();
 
         $response = $this->getJson(
-            "/api/v1/roles/{$role->name}",
+            "/api/v1/roles/{$role->id}",
             [
                 'X-Domain' => 'foo',
                 'Accept' => 'application/json',
@@ -227,7 +227,7 @@ class RolesAndPermissionsApiTest extends AuthenticatedTestCase
         $role = RolesAndPermissionsHelper::createTestRole();
 
         $response = $this->putJson(
-            "/api/v1/roles/{$role->name}",
+            "/api/v1/roles/{$role->id}",
             [
                 'name' => 'foo-role-2',
             ],
@@ -249,7 +249,7 @@ class RolesAndPermissionsApiTest extends AuthenticatedTestCase
         $role = RolesAndPermissionsHelper::createTestRole();
 
         $response = $this->deleteJson(
-            "/api/v1/roles/{$role->name}",
+            "/api/v1/roles/{$role->id}",
             [],
             [
                 'X-Domain' => 'foo',
@@ -272,7 +272,7 @@ class RolesAndPermissionsApiTest extends AuthenticatedTestCase
         }
 
         $response = $this->getJson(
-            "/api/v1/roles/{$role->name}/members",
+            "/api/v1/roles/{$role->id}/members",
             [
                 'X-Domain' => 'foo',
                 'Accept' => 'application/json',
@@ -306,7 +306,7 @@ class RolesAndPermissionsApiTest extends AuthenticatedTestCase
         }
 
         $response = $this->getJson(
-            "/api/v1/roles/{$role->name}/permissions",
+            "/api/v1/roles/{$role->id}/permissions",
             [
                 'X-Domain' => 'foo',
                 'Accept' => 'application/json',
@@ -332,7 +332,7 @@ class RolesAndPermissionsApiTest extends AuthenticatedTestCase
         }
 
         $response = $this->postJson(
-            "/api/v1/roles/{$role->name}/permissions",
+            "/api/v1/roles/{$role->id}/permissions",
             [
                 'permissions' => $permissions,
             ],

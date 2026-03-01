@@ -76,6 +76,23 @@ enum Permissions: string
     case LIST_QUESTIONNAIRE_RESPONSES = 'ALL-list-questionnaire-responses';
     case VIEW_QUESTIONNAIRE_RESPONSES = 'ALL-view-questionnaire-responses';
 
+    case LIST_VEHICLES = 'ALL-list-vehicles';
+    case VIEW_VEHICLES = 'ALL-view-vehicles';
+    case CREATE_VEHICLES = 'ALL-create-vehicles';
+    case EDIT_VEHICLES = 'ALL-edit-vehicles';
+    case DELETE_VEHICLES = 'ALL-delete-vehicles';
+
+    case LIST_VEHICLE_REQUESTS = 'ALL-list-vehicle-requests';
+    case VIEW_VEHICLE_REQUESTS = 'ALL-view-vehicle-requests';
+    case CREATE_VEHICLE_REQUESTS = 'ALL-create-vehicle-requests';
+    case EDIT_VEHICLE_REQUESTS = 'ALL-edit-vehicle-requests';
+    case DELETE_VEHICLE_REQUESTS = 'ALL-delete-vehicle-requests';
+
+    case LIST_VEHICLE_TRIPS = 'ALL-list-vehicle-trips';
+    case VIEW_VEHICLE_TRIPS = 'ALL-view-vehicle-trips';
+    case EDIT_VEHICLE_TRIPS = 'ALL-edit-vehicle-trips';
+    case DELETE_VEHICLE_TRIPS = 'ALL-delete-vehicle-trips';
+
     public static function all(): array
     {
         return [
@@ -148,6 +165,23 @@ enum Permissions: string
 
             self::LIST_QUESTIONNAIRE_RESPONSES,
             self::VIEW_QUESTIONNAIRE_RESPONSES,
+
+            self::LIST_VEHICLES,
+            self::VIEW_VEHICLES,
+            self::CREATE_VEHICLES,
+            self::EDIT_VEHICLES,
+            self::DELETE_VEHICLES,
+
+            self::LIST_VEHICLE_REQUESTS,
+            self::VIEW_VEHICLE_REQUESTS,
+            self::CREATE_VEHICLE_REQUESTS,
+            self::EDIT_VEHICLE_REQUESTS,
+            self::DELETE_VEHICLE_REQUESTS,
+
+            self::LIST_VEHICLE_TRIPS,
+            self::VIEW_VEHICLE_TRIPS,
+            self::EDIT_VEHICLE_TRIPS,
+            self::DELETE_VEHICLE_TRIPS,
         ];
     }
 
@@ -229,6 +263,115 @@ enum Permissions: string
 
             self::LIST_QUESTIONNAIRE_RESPONSES => 'Listar respostas de questionários',
             self::VIEW_QUESTIONNAIRE_RESPONSES => 'Visualizar respostas de questionários',
+
+            self::LIST_VEHICLES => 'Listar veículos',
+            self::VIEW_VEHICLES => 'Visualizar veículos',
+            self::CREATE_VEHICLES => 'Criar veículos',
+            self::EDIT_VEHICLES => 'Editar veículos',
+            self::DELETE_VEHICLES => 'Deletar veículos',
+
+            self::LIST_VEHICLE_REQUESTS => 'Listar solicitações de veículos',
+            self::VIEW_VEHICLE_REQUESTS => 'Visualizar solicitações de veículos',
+            self::CREATE_VEHICLE_REQUESTS => 'Criar solicitações de veículos',
+            self::EDIT_VEHICLE_REQUESTS => 'Editar solicitações de veículos',
+            self::DELETE_VEHICLE_REQUESTS => 'Deletar solicitações de veículos',
+
+            self::LIST_VEHICLE_TRIPS => 'Listar viagens',
+            self::VIEW_VEHICLE_TRIPS => 'Visualizar viagens',
+            self::EDIT_VEHICLE_TRIPS => 'Editar viagens',
+            self::DELETE_VEHICLE_TRIPS => 'Deletar viagens',
+        };
+    }
+
+    public function detail(): string
+    {
+        return match ($this) {
+            self::ACCESS_ADMIN_PANEL => 'Permite que o usuário acesse o painel de administração do sistema.',
+
+            self::GET_VERSA360_CLIENT => 'Permite que o usuário obtenha o cliente do Versa360 para integração OAuth2. Permissão necessária para integrações com o Versa360.',
+            self::VIEW_VERSA360_SCOPE_PERMISSION_MAP => 'Permite que o usuário visualize o mapeamento entre escopos do Versa360 e permissões do sistema.',
+            self::CREATE_VERSA360_SCOPE_PERMISSION_MAP => 'Permite que o usuário crie novos mapeamentos entre escopos do Versa360 e permissões do sistema.',
+            self::EDIT_VERSA360_SCOPE_PERMISSION_MAP => 'Permite que o usuário edite mapeamentos existentes entre escopos do Versa360 e permissões do sistema.',
+            self::DELETE_VERSA360_SCOPE_PERMISSION_MAP => 'Permite que o usuário delete mapeamentos entre escopos do Versa360 e permissões do sistema.',
+
+            self::LIST_USERS => 'Permite que o usuário liste outros usuárioes do sistema.',
+            self::VIEW_USERS => 'Permite que o usuário visualize detalhes de outros usuárioes do sistema.',
+            self::CREATE_USERS => 'Permite que o usuário crie novos usuárioes no sistema.',
+            self::EDIT_USERS => 'Permite que o usuário edite informações de outros usuárioes no sistema.',
+            self::DELETE_USERS => 'Permite que o usuário delete outros usuárioes do sistema.',
+
+            self::EDIT_USERS_STATUS => 'Permite que o usuário altere o status (ativo/inativo) de outros usuárioes no sistema.',
+            self::EDIT_USERS_PASSWORDS => 'Permite que o usuário altere as senhas de outros usuárioes no sistema.',
+
+            self::LIST_USER_ROLES => 'Permite que o usuário liste os grupos atribuídos aos usuárioes.',
+            self::EDIT_USER_ROLES => 'Permite que o usuário edite os grupos atribuídos aos usuárioes.',
+
+            self::LIST_ROLES => 'Permite que o usuário liste os grupos de permissões do sistema.',
+            self::VIEW_ROLES => 'Permite que o usuário visualize detalhes dos grupos de permissões do sistema.',
+            self::CREATE_ROLES => 'Permite que o usuário crie novos grupos de permissões no sistema.',
+            self::EDIT_ROLES => 'Permite que o usuário edite grupos de permissões existentes no sistema.',
+            self::DELETE_ROLES => 'Permite que o usuário delete grupos de permissões do sistema.',
+
+            self::LIST_ROLE_PERMISSIONS => 'Permite que o usuário liste as permissões atribuídas aos grupos.',
+            self::EDIT_ROLE_PERMISSIONS => 'Permite que o usuário edite as permissões atribuídas aos grupos.',
+
+            self::LIST_PERMISSIONS => 'Permite que o usuário liste todas as permissões disponíveis no sistema.',
+
+            self::IMPERSONATE => 'Permite que o usuário assuma a identidade de outro usuário para fins de suporte ou administração.',
+            self::BE_IMPERSONATED => 'Permite que o usuário seja assumido por outro usuário para fins de suporte ou administração.',
+
+            self::VIEW_AUTH_SETTINGS => 'Permite que o usuário visualize as configurações de autenticação do sistema.',
+            self::EDIT_AUTH_SETTINGS => 'Permite que o usuário edite as configurações de autenticação do sistema.',
+
+            self::DELETE_MEDIA => 'Permite que o usuário delete arquivos de mídia (imagens, vídeos, etc.) do sistema.',
+
+            self::LIST_ADS_ITEMS => 'Permite que o usuário liste os banners exibidos na tela de login.',
+            self::VIEW_ADS_ITEMS => 'Permite que o usuário visualize detalhes dos banners exibidos na tela de login.',
+            self::CREATE_ADS_ITEMS => 'Permite que o usuário crie novos banners para serem exibidos na tela de login.',
+            self::EDIT_ADS_ITEMS => 'Permite que o usuário edite os banners exibidos na tela de login.',
+            self::DELETE_ADS_ITEMS => 'Permite que o usuário delete os banners exibidos na tela de login.',
+
+            self::LIST_THEMES_ITEMS => 'Permite que o usuário liste os temas disponíveis no sistema.',
+            self::VIEW_THEMES_ITEMS => 'Permite que o usuário visualize detalhes dos temas disponíveis no sistema.',
+            self::CREATE_THEMES_ITEMS => 'Permite que o usuário crie novos temas no sistema.',
+            self::EDIT_THEMES_ITEMS => 'Permite que o usuário edite os temas disponíveis no sistema.',
+            self::DELETE_THEMES_ITEMS => 'Permite que o usuário delete os temas disponíveis no sistema.',
+
+            self::LIST_ACCESS_LOGS => 'Permite que o usuário liste os logs de acesso ao sistema.',
+
+            self::LIST_QUESTIONNAIRES_GROUPS => 'Permite que o usuário liste os blocos de questionários disponíveis no sistema.',
+            self::VIEW_QUESTIONNAIRES_GROUPS => 'Permite que o usuário visualize detalhes dos blocos de questionários disponíveis no sistema.',
+            self::CREATE_QUESTIONNAIRES_GROUPS => 'Permite que o usuário crie novos blocos de questionários no sistema.',
+            self::EDIT_QUESTIONNAIRES_GROUPS => 'Permite que o usuário edite os blocos de questionários disponíveis no sistema.',
+            self::DELETE_QUESTIONNAIRES_GROUPS => 'Permite que o usuário delete os blocos de questionários disponíveis no sistema.',
+
+            self::LIST_QUESTIONNAIRES => 'Permite que o usuário liste os questionários disponíveis no sistema.',
+            self::VIEW_QUESTIONNAIRES => 'Permite que o usuário visualize detalhes dos questionários disponíveis no sistema.',
+            self::CREATE_QUESTIONNAIRES => 'Permite que o usuário crie novos questionários no sistema.',
+            self::EDIT_QUESTIONNAIRES => 'Permite que o usuário edite os questionários disponíveis no sistema.',
+            self::DELETE_QUESTIONNAIRES => 'Permite que o usuário delete os questionários disponíveis no sistema.',
+
+            self::LIST_QUESTIONNAIRE_RESPONSES => 'Permite que o usuário liste as respostas de questionários submetidas.',
+            self::VIEW_QUESTIONNAIRE_RESPONSES => 'Permite que o usuário visualize detalhes das respostas de questionários submetidas.',
+
+            self::LIST_VEHICLES => 'Permite que o usuário liste os veículos cadastrados no sistema.',
+            self::VIEW_VEHICLES => 'Permite que o usuário visualize detalhes dos veículos cadastrados no sistema.',
+            self::CREATE_VEHICLES => 'Permite que o usuário crie novos veículos no sistema.',
+            self::EDIT_VEHICLES => 'Permite que o usuário edite os veículos cadastrados no sistema.',
+            self::DELETE_VEHICLES => 'Permite que o usuário delete os veículos cadastrados no sistema.',
+
+            self::LIST_VEHICLE_REQUESTS => 'Permite que o usuário liste as solicitações de veículos feitas no sistema.',
+            self::VIEW_VEHICLE_REQUESTS => 'Permite que o usuário visualize detalhes das solicitações de veículos feitas no sistema.',
+            self::CREATE_VEHICLE_REQUESTS => 'Permite que o usuário crie novas solicitações de veículos no sistema.',
+            self::EDIT_VEHICLE_REQUESTS => 'Permite que o usuário edite as solicitações de veículos feitas no sistema.',
+            self::DELETE_VEHICLE_REQUESTS => 'Permite que o usuário delete as solicitações de veículos feitas no sistema.',
+
+            self::LIST_VEHICLE_TRIPS => 'Permite que o usuário liste as viagens realizadas pelos veículos cadastrados no sistema.',
+            self::VIEW_VEHICLE_TRIPS => 'Permite que o usuário visualize detalhes das viagens realizadas pelos veículos cadastrados no sistema.',
+            self::EDIT_VEHICLE_TRIPS => 'Permite que o usuário edite as viagens realizadas pelos veículos cadastrados no sistema.',
+            self::DELETE_VEHICLE_TRIPS => 'Permite que o usuário delete as viagens realizadas pelos veículos cadastrados no sistema.',
+
+            default => 'Detalhes não disponíveis para esta permissão.',
         };
     }
 }

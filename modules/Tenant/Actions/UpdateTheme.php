@@ -32,40 +32,30 @@ final readonly class UpdateTheme
                 $theme->addMediaFromDisk($dto->primary_logo->key, 'central')
                     ->usingFileName($dto->primary_logo->uuid . '.' . $dto->primary_logo->extension)
                     ->toMediaCollection('primary-logos');
-            } elseif ($dto->primary_logo === null) {
-                $theme->clearMediaCollection('primary-logos');
             }
 
             if ($dto->contrast_primary_logo) {
                 $theme->addMediaFromDisk($dto->contrast_primary_logo->key, 'central')
                     ->usingFileName($dto->contrast_primary_logo->uuid . '.' . $dto->contrast_primary_logo->extension)
                     ->toMediaCollection('contrast-primary-logos');
-            } elseif ($dto->contrast_primary_logo === null) {
-                $theme->clearMediaCollection('contrast-primary-logos');
             }
 
             if ($dto->favicon) {
                 $theme->addMediaFromDisk($dto->favicon->key, 'central')
                     ->usingFileName($dto->favicon->uuid . '.' . $dto->favicon->extension)
                     ->toMediaCollection('favicons');
-            } elseif ($dto->favicon === null) {
-                $theme->clearMediaCollection('favicons');
             }
 
             if ($dto->reduced_logo) {
                 $theme->addMediaFromDisk($dto->reduced_logo->key, 'central')
                     ->usingFileName($dto->reduced_logo->uuid . '.' . $dto->reduced_logo->extension)
                     ->toMediaCollection('reduced-logos');
-            } elseif ($dto->reduced_logo === null) {
-                $theme->clearMediaCollection('reduced-logos');
             }
 
             if ($dto->contrast_reduced_logo) {
                 $theme->addMediaFromDisk($dto->contrast_reduced_logo->key, 'central')
                     ->usingFileName($dto->contrast_reduced_logo->uuid . '.' . $dto->contrast_reduced_logo->extension)
                     ->toMediaCollection('contrast-reduced-logos');
-            } elseif ($dto->contrast_reduced_logo === null) {
-                $theme->clearMediaCollection('contrast-reduced-logos');
             }
 
             $theme->fill($updateData);

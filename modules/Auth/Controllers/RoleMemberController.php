@@ -12,8 +12,8 @@ use Modules\Common\Core\DTOs\DatatableDTO;
 
 final class RoleMemberController extends Controller
 {
-    public function index(string $role, DatatableDTO $dto, FetchRoleMember $action): JsonResponse
+    public function index(int $id, DatatableDTO $dto, FetchRoleMember $action): JsonResponse
     {
-        return RoleMemberResource::collection($action->handle($role, $dto))->response();
+        return RoleMemberResource::collection($action->handle($id, $dto))->response();
     }
 }

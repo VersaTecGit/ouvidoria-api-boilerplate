@@ -12,6 +12,9 @@ enum Modules: string
     case ROLES = 'roles';
     case ACCESS_LOGS = 'access_logs';
     case QUESTIONNAIRES = 'questionnaires';
+    case VEHICLES = 'vehicles';
+    case VEHICLE_REQUESTS = 'vehicle_requests';
+    case VEHICLE_TRIPS = 'vehicle_trips';
 
     public static function all(): array
     {
@@ -22,6 +25,9 @@ enum Modules: string
             self::ROLES,
             self::ACCESS_LOGS,
             self::QUESTIONNAIRES,
+            self::VEHICLES,
+            self::VEHICLE_REQUESTS,
+            self::VEHICLE_TRIPS,
         ];
     }
 
@@ -39,6 +45,9 @@ enum Modules: string
             self::ROLES => 'Grupos',
             self::ACCESS_LOGS => 'Logs de acesso',
             self::QUESTIONNAIRES => 'Questionários',
+            self::VEHICLES => 'Veículos',
+            self::VEHICLE_REQUESTS => 'Solicitações de veículos',
+            self::VEHICLE_TRIPS => 'Histórico de viagens',
         };
     }
 }

@@ -22,8 +22,8 @@ class UsersApiTest extends AuthenticatedTestCase
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::LIST_USERS->value]);
 
-        foreach (range(1, 7) as $number) {
-            UsersHelper::createTestuser();
+        foreach (range(1, 8) as $number) {
+            UsersHelper::createTestUser();
         }
 
         $response = $this->getJson(
@@ -54,8 +54,8 @@ class UsersApiTest extends AuthenticatedTestCase
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::LIST_USERS->value]);
 
-        foreach (range(1, 27) as $number) {
-            UsersHelper::createTestuser();
+        foreach (range(1, 28) as $number) {
+            UsersHelper::createTestUser();
         }
 
         $response = $this->getJson(
@@ -86,8 +86,8 @@ class UsersApiTest extends AuthenticatedTestCase
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::LIST_USERS->value]);
 
-        foreach (range(1, 27) as $number) {
-            UsersHelper::createTestuser();
+        foreach (range(1, 28) as $number) {
+            UsersHelper::createTestUser();
         }
 
         $response = $this->getJson(
@@ -119,7 +119,7 @@ class UsersApiTest extends AuthenticatedTestCase
         $token = $this->loginAndGetTokenWithPermissions([Permissions::LIST_USERS->value]);
 
         foreach (range(1, 6) as $number) {
-            UsersHelper::createTestuser();
+            UsersHelper::createTestUser();
         }
 
         user::create(UsersHelper::dumbuserData());
@@ -152,13 +152,15 @@ class UsersApiTest extends AuthenticatedTestCase
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::CREATE_USERS->value]);
 
+        $role = RolesAndPermissionsHelper::createTestRole();
+
         $response = $this->postJson(
             '/api/v1/users',
             [
                 'name' => 'John Doe',
                 'login' => 'john-doe',
                 'email' => 'john@test.com',
-                'role' => 'test-role',
+                'role' => $role->id,
                 'extra_permissions' => [Permissions::LIST_USERS->value],
                 'password' => 's3CR3t@!',
                 'password_confirmation' => 's3CR3t@!',
@@ -172,7 +174,15 @@ class UsersApiTest extends AuthenticatedTestCase
 
         $response->assertStatus(Response::HTTP_CREATED)
             ->assertJsonStructure([
-                'id', 'name', 'login', 'email', 'roles', 'permissions', 'created_at', 'updated_at',
+                'id',
+                'name',
+                'login',
+                'email',
+                'roles',
+                'permissions',
+                'driver',
+                'created_at',
+                'updated_at',
             ]);
 
         $this->assertTrue(
@@ -204,7 +214,7 @@ class UsersApiTest extends AuthenticatedTestCase
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::VIEW_USERS->value]);
 
-        $user = UsersHelper::createTestuser();
+        $user = UsersHelper::createTestUser();
 
         $response = $this->getJson(
             "/api/v1/users/{$user->uuid}",
@@ -217,7 +227,15 @@ class UsersApiTest extends AuthenticatedTestCase
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure([
-                'id', 'name', 'login', 'email', 'roles', 'permissions', 'created_at', 'updated_at',
+                'id',
+                'name',
+                'login',
+                'email',
+                'roles',
+                'permissions',
+                'driver',
+                'created_at',
+                'updated_at',
             ]);
     }
 
@@ -241,7 +259,7 @@ class UsersApiTest extends AuthenticatedTestCase
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::EDIT_USERS->value]);
 
-        $user = UsersHelper::createTestuser();
+        $user = UsersHelper::createTestUser();
 
         $response = $this->putJson(
             "/api/v1/users/{$user->uuid}",
@@ -263,7 +281,7 @@ class UsersApiTest extends AuthenticatedTestCase
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::DELETE_USERS->value]);
 
-        $user = UsersHelper::createTestuser();
+        $user = UsersHelper::createTestUser();
 
         $response = $this->deleteJson(
             "/api/v1/users/{$user->uuid}",
@@ -282,7 +300,7 @@ class UsersApiTest extends AuthenticatedTestCase
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::LIST_USER_ROLES->value]);
 
-        $user = UsersHelper::createTestuser();
+        $user = UsersHelper::createTestUser();
         $role = RolesAndPermissionsHelper::createTestRole();
 
         $user->assignRole($role);
@@ -306,7 +324,7 @@ class UsersApiTest extends AuthenticatedTestCase
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::LIST_USER_ROLES->value]);
 
-        $user = UsersHelper::createTestuser();
+        $user = UsersHelper::createTestUser();
 
         $response = $this->getJson(
             "/api/v1/users/{$user->uuid}/roles",
@@ -325,7 +343,7 @@ class UsersApiTest extends AuthenticatedTestCase
     {
         $token = $this->loginAndGetToken(Role::where('name', DefaultRoles::ADMIN->value)->first());
 
-        $user = UsersHelper::createTestuser();
+        $user = UsersHelper::createTestUser();
         $user->givePermissionTo([Permissions::LIST_USERS->value, Permissions::VIEW_USERS->value]);
 
         $role = RolesAndPermissionsHelper::createTestRole();
@@ -333,7 +351,7 @@ class UsersApiTest extends AuthenticatedTestCase
         $response = $this->post(
             "/api/v1/users/{$user->uuid}/roles",
             [
-                'roles' => [$role->name],
+                'roles' => [$role->id],
                 'extra_permissions' => [Permissions::LIST_USERS->value, Permissions::EDIT_USERS->value],
             ],
             [
@@ -355,7 +373,7 @@ class UsersApiTest extends AuthenticatedTestCase
     {
         $token = $this->loginAndGetTokenWithPermissions([Permissions::EDIT_USERS_PASSWORDS->value]);
 
-        $user = UsersHelper::createTestuser();
+        $user = UsersHelper::createTestUser();
 
         $response = $this->putJson(
             "/api/v1/users/{$user->uuid}/password",

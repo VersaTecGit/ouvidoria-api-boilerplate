@@ -44,6 +44,7 @@ enum DefaultRoles: string
     {
         return match ($this) {
             self::ADMIN => Permissions::all(),
+            default => []
         };
     }
 }

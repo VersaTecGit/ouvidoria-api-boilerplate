@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Auth\Actions;
 
+use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Modules\Auth\DTOs\UpdateUserDTO;
@@ -24,15 +26,25 @@ final readonly class UpdateUser
 
         Gate::denyIf($authUser->uuid !== $uuid && ! Gate::allows('ALL-edit-users', $user));
 
-        $updateData = collect($dto->toArray())->filter(fn (string|bool|null|array $item) => ! is_null($item))->toArray();
+        try {
+            DB::beginTransaction();
 
-        Gate::denyIf(! Gate::allows('ALL-edit-users-status', $user) && isset($updateData['active']));
-        Gate::denyIf($authUser->uuid !== $uuid && isset($updateData['password']));
+            $updateData = $dto->nullableSafeToArray(User::nullable());
 
-        $updateData = $this->buildPasswordData($user, $updateData);
+            Gate::denyIf(! Gate::allows('ALL-edit-users-status', $user) && isset($updateData['active']));
+            Gate::denyIf($authUser->uuid !== $uuid && isset($updateData['password']));
 
-        $user->fill($updateData);
-        $user->save();
+            $updateData = $this->buildPasswordData($user, $updateData);
+
+            $user->fill($updateData);
+            $user->save();
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            throw $e;
+        }
 
         return $user;
     }

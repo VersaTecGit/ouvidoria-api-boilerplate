@@ -16,6 +16,10 @@ class Nis implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        if (is_null($value) || $value === '') {
+            return;
+        }
+
         $nis = sprintf('%011s', empty($value) ? '' : preg_replace('/[^\d]/', '', $value));
 
         if (mb_strlen($nis) !== 11 || preg_match("/^{$nis[0]}{11}$/", $nis)) {

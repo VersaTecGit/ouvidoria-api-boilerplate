@@ -16,6 +16,10 @@ class Cpf implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        if (is_null($value) || $value === '') {
+            return;
+        }
+
         $c = preg_replace('/\D/', '', $value);
 
         if (strlen($c) !== 11 || preg_match("/^{$c[0]}{11}$/", $c)) {

@@ -11,6 +11,13 @@ use Spatie\Permission\Models\Role as SpatieRole;
 
 class Role extends SpatieRole
 {
+    protected $nullable = ['description'];
+
+    public static function nullable(): array
+    {
+        return (new self())->nullable;
+    }
+
     public function isProtected(): bool
     {
         return in_array(

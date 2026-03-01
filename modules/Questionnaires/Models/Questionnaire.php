@@ -45,14 +45,9 @@ final class Questionnaire extends Model
         return $query->where('active', true);
     }
 
-    public function scopeAll(Builder $query): Builder
-    {
-        return $query;
-    }
-
     public function questionnairesGroup(): BelongsTo
     {
-        return $this->belongsTo(QuestionnairesGroup::class);
+        return $this->belongsTo(QuestionnairesGroup::class)->withoutGlobalScope('active-questionnaires-groups');
     }
 
     public function responses(): HasMany

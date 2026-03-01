@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Auth\Actions;
 
-use Exception;
 use Modules\Auth\DTOs\SyncUserRolesDTO;
+use Modules\Common\Core\Exceptions\ApiException;
 
 final readonly class SyncUserRoles
 {
@@ -13,7 +13,7 @@ final readonly class SyncUserRoles
 
     public function handle(string $user, SyncUserRolesDTO $dto): void
     {
-        throw_if(! $this->fetchValidateRoleHierarchy->handle($dto->roles), new Exception('Selecione apenas grupos que você tem acesso.'));
+        throw_if(! $this->fetchValidateRoleHierarchy->handle($dto->roles), new ApiException('Selecione apenas grupos que você tem acesso.'));
 
         $user = $this->fetchUser->handle($user);
         $user->syncRoles($dto->roles);

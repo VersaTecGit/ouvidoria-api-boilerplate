@@ -26,15 +26,25 @@ readonly class Datatable
             : $builder->paginate($dto->per_page, $columns, $pageName, $dto->page);
     }
 
-    public static function applySort(Builder $builder, DatatableDTO $dto): Builder
+    public static function applySort(Builder $builder, DatatableDTO $dto, array $relatedColumns = []): Builder
     {
         if (empty($dto->sort_field)) {
             return $builder;
         }
 
-        return $dto->sort_order === SortOption::ASC
-            ? $builder->orderBy($dto->sort_field)
-            : $builder->orderByDesc($dto->sort_field);
+        if (array_key_exists($dto->sort_field, $relatedColumns)) {
+            [$relation, $column] = explode('_', $dto->sort_field, 2);
+            $relatedTable = $relatedColumns[$dto->sort_field];
+
+            $builder->leftJoin($relatedTable, "{$relatedTable}.id", '=', "{$relation}_id");
+            $sortField = "{$relatedTable}.{$column}";
+        } else {
+            $sortField = $dto->sort_field;
+        }
+
+        return $dto->sort_order->value === SortOption::ASC->value
+            ? $builder->orderBy($sortField)
+            : $builder->orderByDesc($sortField);
     }
 
     public static function applyFilter(Builder $builder, DatatableDTO $dto, array $fieldsToSearch): Builder

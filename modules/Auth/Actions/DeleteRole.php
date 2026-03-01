@@ -12,15 +12,15 @@ final readonly class DeleteRole
 {
     public function __construct(private FetchRole $fetchRole, private FetchRoleMember $fetchRoleMember) {}
 
-    public function handle(string $role): void
+    public function handle(int $id): void
     {
-        $role = $this->fetchRole->handle($role);
+        $role = $this->fetchRole->handle($id);
 
         throw_if($role->name === DefaultRoles::ADMIN->value, new ApiException('Não é permitido deletar o grupo ' . $role->descripiton . '.'));
 
         $dto = new DatatableDTO();
         $dto->per_page = 'all';
-        $members = $this->fetchRoleMember->handle($role->name, $dto);
+        $members = $this->fetchRoleMember->handle($role->id, $dto);
 
         if ($members->count() > 0) {
             throw new ApiException('Grupo não pode ser excluído por estar em uso.');

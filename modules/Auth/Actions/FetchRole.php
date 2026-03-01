@@ -8,10 +8,8 @@ use Modules\Auth\Models\Role;
 
 final readonly class FetchRole
 {
-    public function handle(string $name): Role
+    public function handle(int $id): Role
     {
-        $decodedRole = urldecode($name);
-
-        return Role::findByName($decodedRole);
+        return Role::findOrFail($id);
     }
 }

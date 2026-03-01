@@ -14,7 +14,7 @@ class TenantSeeder extends Seeder
         Tenant::create([
             'id' => 'localhost',
             'name' => 'Test Tenant 1',
-            'modules' => ['portal'],
+            'modules' => [],
         ])
             ->domains()
             ->create([
