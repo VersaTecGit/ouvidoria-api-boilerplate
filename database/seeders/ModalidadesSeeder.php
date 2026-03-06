@@ -15,10 +15,10 @@ class ModalidadesSeeder extends Seeder
     public function run()
     {
         $modalidades = [
-            ['descricao' => 'Disponibilização'],
-            ['descricao' => 'Empenho'],
-            ['descricao' => 'Liquidação'],
-            ['descricao' => 'Pagamento']
+            ['descricao' => 'Execução direta'],
+            ['descricao' => 'Transferência entidade'],
+            ['descricao' => 'Transferência governamental'],
+            ['descricao' => 'Outros']
         ];
 
         foreach ($modalidades as $modalidade) {

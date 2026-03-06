@@ -16,12 +16,7 @@ return new class extends Migration
 
             $table->string('nome');
 
-            $table->enum('tipo', [
-                'parlamentar',
-                'bancada',
-                'comissao',
-                'outro',
-            ]);
+            $table->string('tipo');
 
             $table->string('descricao')->nullable();
 
