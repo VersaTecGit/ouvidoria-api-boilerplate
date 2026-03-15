@@ -48,7 +48,9 @@ final class CreateUserDTO extends ValidatedDTO
 
     protected function defaults(): array
     {
-        return [];
+        return [
+            'extra_permissions' => [],
+        ];
     }
 
     protected function casts(): array
