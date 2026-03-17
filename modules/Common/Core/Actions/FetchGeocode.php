@@ -15,7 +15,7 @@ final readonly class FetchGeocode
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'User-Agent: API Social - Versa Tecnologia',
+            'User-Agent: API Boilerplate - Versa Tecnologia',
         ]);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 

@@ -23,7 +23,7 @@ class ReleaseNotes extends Notification
     {
         return [
             'title' => 'Nova atualização disponível',
-            'message' => "O Versa Social foi atualizado para a versão {$this->version}. Confira as novidades!",
+            'message' => "O sistema foi atualizado para a versão {$this->version}. Confira as novidades!",
             'version' => $this->version,
         ];
     }

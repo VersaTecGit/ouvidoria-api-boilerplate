@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
+use Modules\Questionnaires\Controllers\PublicQuestionnaireSignedStorageUrlController;
 use Modules\Questionnaires\Controllers\QuestionnaireController;
 use Modules\Questionnaires\Controllers\QuestionnaireResponseController;
 use Modules\Questionnaires\Controllers\QuestionnairesGroupController;
@@ -38,5 +39,11 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-Route::post('questionnaires/responses', [QuestionnaireResponseController::class, 'store']);
-Route::get('questionnaires/{uuid}', [QuestionnaireController::class, 'show']);
+Route::prefix('questionnaires')->group(function () {
+    Route::post('responses', [QuestionnaireResponseController::class, 'store']);
+
+    Route::prefix('{uuid}')->group(function () {
+        Route::get('/', [QuestionnaireController::class, 'show']);
+        Route::post('uploads/signed-storage-url', [PublicQuestionnaireSignedStorageUrlController::class, 'store'])->middleware('throttle:10,1');
+    });
+});

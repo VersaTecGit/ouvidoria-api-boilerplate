@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Questionnaires\Support;
 
 use Modules\Questionnaires\DTOs\FileUploadElementDTO;
+use Throwable;
 
 enum QuestionnaireElementType: string
 {
@@ -91,14 +92,19 @@ enum QuestionnaireElementType: string
                 $decodedAnswer = json_decode($answer, true);
 
                 if (! is_array($decodedAnswer)) {
-                    return FileUploadElementDTO::fromArray($decodedAnswer);
+                    return false;
                 }
 
-                foreach ($decodedAnswer as $fileItem) {
-                    if (isset($fileItem['uuid'])) {
-                        continue;
+                $items = array_is_list($decodedAnswer)
+                    ? $decodedAnswer
+                    : [$decodedAnswer];
+
+                foreach ($items as $fileItem) {
+                    try {
+                        FileUploadElementDTO::fromArray($fileItem);
+                    } catch (Throwable) {
+                        return false;
                     }
-                    FileUploadElementDTO::fromArray($fileItem);
                 }
 
                 return true;

@@ -43,7 +43,7 @@ class CreateQuestionnaireResponseDTO extends ValidatedDTO
     {
         return [
             'questionnaire_id' => new StringCast(),
-            'array' => new ArrayCast(new StringCast()),
+            'answers' => new ArrayCast(new StringCast()),
             'started_at' => new CarbonImmutableCast(),
             'ended_at' => new CarbonImmutableCast(),
         ];

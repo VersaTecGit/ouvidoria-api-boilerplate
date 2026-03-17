@@ -66,15 +66,30 @@ final readonly class CreateQuestionnaireResponse
     public function handleFileUpload(QuestionnaireResponse $questionnaireResponse, string $answer): string
     {
         $decodedAnswer = json_decode($answer, true);
-        $dto = FileUploadElementDTO::fromArray($decodedAnswer);
 
-        $questionnaireResponse->addMediaFromDisk($dto->file->key, 'central')
-            ->usingFileName($dto->file->uuid . '.' . $dto->file->extension)
-            ->toMediaCollection('attachments');
+        if (! is_array($decodedAnswer)) {
+            throw new ApiException('Resposta de upload de arquivo inválida.');
+        }
 
-        return json_encode([
-            'fileName' => $dto->fileName,
-            'uuid' => $dto->file->uuid,
-        ]);
+        $files = array_is_list($decodedAnswer)
+            ? $decodedAnswer
+            : [$decodedAnswer];
+
+        $uploadedFiles = [];
+
+        foreach ($files as $fileData) {
+            $dto = FileUploadElementDTO::fromArray($fileData);
+
+            $questionnaireResponse->addMediaFromDisk($dto->file->key, 'central')
+                ->usingFileName($dto->file->uuid . '.' . $dto->file->extension)
+                ->toMediaCollection('attachments');
+
+            $uploadedFiles[] = [
+                'fileName' => $dto->fileName,
+                'uuid' => $dto->file->uuid,
+            ];
+        }
+
+        return json_encode($uploadedFiles);
     }
 }

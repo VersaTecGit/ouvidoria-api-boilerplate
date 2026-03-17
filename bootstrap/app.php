@@ -9,6 +9,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Modules\Common\Core\Commands\SendReleaseNotesNotification;
 use Modules\Common\Core\Exceptions\ApiException;
 use Modules\Common\Core\Exceptions\Exception as CoreException;
 use Modules\Common\Logs\Commands\DeleteOldAccessLogs;
@@ -70,6 +71,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withCommands([
         DeleteOldAccessLogs::class,
+        SendReleaseNotesNotification::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         $schedule->call(new InactiveStatusAds())
