@@ -18,9 +18,12 @@ return new class extends Migration
 
             $table->string('conta_corrente', 20);
 
-            $table->string('tipo', 50);
-
-            $table->date('data');
+             $table->enum('tipo', [
+                'liquidacao',
+                'disponibilizacao',
+                'empenho',
+                'pagamento',
+            ]);
 
             $table->decimal('valor', 15, 2);
 

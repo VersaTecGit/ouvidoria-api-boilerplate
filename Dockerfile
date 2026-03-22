@@ -33,9 +33,9 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     sockets \
     pcntl
 
-# Instalar extensões via PECL (imagick e redis)
-RUN pecl install imagick redis \
-    && docker-php-ext-enable imagick redis
+# Instalar extensões via PECL (imagick, redis e xdebug)
+RUN pecl install imagick redis xdebug \
+    && docker-php-ext-enable imagick redis xdebug
 
 # Aumentar limite de memória do PHP
 RUN echo "memory_limit = 512M" > /usr/local/etc/php/conf.d/memory-limit.ini
