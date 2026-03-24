@@ -16,14 +16,18 @@ return new class extends Migration
 
             $table->string('nome');
 
-            $table->string('tipo');
+            $table->enum('tipo', [
+                'parlamentar',
+                'bancada',
+                'comissao',
+                'outro',
+            ]);
 
             $table->string('descricao')->nullable();
 
             $table->timestamps();
             $table->softDeletes();
 
-            // Índice útil para filtros administrativos
             $table->index('tipo');
         });
     }
