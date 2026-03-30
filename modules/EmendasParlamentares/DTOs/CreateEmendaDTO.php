@@ -23,14 +23,14 @@ class CreateEmendaDTO extends ValidatedDTO
     public function rules() : array
     {
         return [
-            'numero' => 'required|string|regex:/^\d{4}\/\d{1,5}$/|unique:emendas,numero',
+            'numero' => 'required|string|regex:/^\d{4}\/\d+$/|unique:emendas,numero',
             'exercicio' => 'required|string',
             'concedente_id' => 'required|integer|exists:concedentes,id',
             'recebedor_id' => 'required|integer|exists:recebedores,id',
             'modalidade_id' => 'required|integer|exists:modalidades_transferencias,id',
             'rascunho' => 'required|boolean',
             'tipo_objeto' => 'required|string|max:255|in:saude,educacao,infraestrutura,assistencia_social',
-            'status' => 'required|string|in:pendente,aprovado,rejeitado,revisao',
+            'status' => 'required|string|in:pendente,aprovado,rejeitado,revisao,exequivel,inexequivel,impedimento_tecnico',
             'gnd' => 'required|string|max:10|in:gnd3,gnd4,outro',
             'descricao_objeto' => 'required|string',
             'valor' => 'required|numeric|min:0',

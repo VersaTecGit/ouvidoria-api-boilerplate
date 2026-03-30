@@ -18,7 +18,8 @@ class ModalidadesSeeder extends Seeder
             ['descricao' => 'Execução direta'],
             ['descricao' => 'Transferência entidade'],
             ['descricao' => 'Transferência governamental'],
-            ['descricao' => 'Outros']
+            ['descricao' => 'Outros'],
+            ['descricao' => 'Fundo a Fundo']
         ];
 
         foreach ($modalidades as $modalidade) {
