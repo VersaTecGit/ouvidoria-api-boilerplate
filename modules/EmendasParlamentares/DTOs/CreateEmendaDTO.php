@@ -25,6 +25,7 @@ class CreateEmendaDTO extends ValidatedDTO
         return [
             'numero' => 'required|string|regex:/^\d{4}\/\d+$/|unique:emendas,numero',
             'exercicio' => 'required|string',
+            'tipo_origem' => 'nullable|string|in:Federal,Estadual,Municipal',
             'concedente_id' => 'required|integer|exists:concedentes,id',
             'recebedor_id' => 'required|integer|exists:recebedores,id',
             'modalidade_id' => 'required|integer|exists:modalidades_transferencias,id',

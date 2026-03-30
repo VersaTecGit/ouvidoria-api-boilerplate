@@ -23,6 +23,7 @@ class Emenda extends Model
     protected $fillable = [
         'numero',
         'exercicio',
+        'tipo_origem',
         'concedente_id',
         'recebedor_id',
         'modalidade_id',
