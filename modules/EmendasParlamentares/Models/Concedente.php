@@ -10,6 +10,7 @@ class Concedente extends Model
 
     protected $fillable = [
         'nome',
+        'partido',
         'tipo',
         'descricao'
 

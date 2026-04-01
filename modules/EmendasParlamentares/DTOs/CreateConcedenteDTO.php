@@ -7,6 +7,7 @@ use WendellAdriel\ValidatedDTO\ValidatedDTO;
 class CreateConcedenteDTO extends ValidatedDTO
 {   
     public string $nome;
+    public ?string $partido;
     public string $tipo;
     public ?string $descricao;
 
@@ -14,6 +15,7 @@ class CreateConcedenteDTO extends ValidatedDTO
     {
         return [
             'nome' => 'required|string|max:255',
+            'partido' => 'nullable|string|max:100',
             'tipo' => 'required|string|max:100',
             'descricao' => 'nullable|string',
         ];
@@ -25,6 +27,8 @@ class CreateConcedenteDTO extends ValidatedDTO
            'nome.required' => 'O nome do concedente é obrigatório.',
            'nome.string' => 'O nome do concedente deve ser uma string.',
            'nome.max' => 'O nome do concedente não pode exceder 255 caracteres.',
+           'partido.string' => 'O partido do concedente deve ser uma string.',
+           'partido.max' => 'O partido do concedente não pode exceder 100 caracteres.',
            'tipo.required' => 'O tipo do concedente é obrigatório.',
            'tipo.string' => 'O tipo do concedente deve ser uma string.',
            'tipo.max' => 'O tipo do concedente não pode exceder 100 caracteres.',

@@ -13,6 +13,7 @@ final class ConcedenteResource extends JsonResource
         return [
             'id' => $this->id,
             'nome' => $this->nome,
+            'partido' => $this->partido,
             'tipo' => $this->tipo,
             'descricao' => $this->descricao,
         ];
