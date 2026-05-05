@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Modules\EmendasParlamentares\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Modules\Common\Core\Responses\ApiSuccessResponse;
@@ -21,8 +24,8 @@ class RecebedorController extends Controller
         );
     }
 
-    public function index (GetRecebedor $action) {
-        $lista = $action->handle();
-        return response()->json(["status" => "success", "data" => $lista]);
+    public function index(Request $request, GetRecebedor $action): JsonResponse
+    {
+        return $action->handle($request);
     }
 }

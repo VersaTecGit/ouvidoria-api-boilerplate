@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Modules\EmendasParlamentares\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Modules\Common\Core\Responses\ApiSuccessResponse;
@@ -13,7 +16,7 @@ use Modules\EmendasParlamentares\Resources\ConcedenteResource;
 
 class ConcedenteController extends Controller
 {
-    public function store(CreateConcedente $action, Request $request) : ApiSuccessResponse
+    public function store(CreateConcedente $action, Request $request): ApiSuccessResponse
     {
         return new ApiSuccessResponse(
             new ConcedenteResource($action->handle(CreateConcedenteDTO::fromRequest($request))),
@@ -21,8 +24,8 @@ class ConcedenteController extends Controller
         );
     }
 
-    public function index (GetConcedente $action) {
-        $lista = $action->handle();
-        return response()->json(["status" => "success", "data" => $lista]);
+    public function index(Request $request, GetConcedente $action): JsonResponse
+    {
+        return $action->handle($request);
     }
 }
