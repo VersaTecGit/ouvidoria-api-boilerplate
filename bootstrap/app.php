@@ -13,6 +13,7 @@ use Modules\Common\Core\Commands\DeleteBucketTempFiles;
 use Modules\Common\Core\Exceptions\ApiException;
 use Modules\Common\Core\Exceptions\Exception as CoreException;
 use Modules\Common\Logs\Commands\DeleteOldAccessLogs;
+use Modules\EmendasParlamentares\Commands\ImportarEmendasDecretoCommand;
 use Modules\Tenant\Jobs\InactiveStatusAds;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -65,6 +66,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         DeleteOldAccessLogs::class,
         DeleteBucketTempFiles::class,
+        ImportarEmendasDecretoCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         $schedule->call(new InactiveStatusAds())

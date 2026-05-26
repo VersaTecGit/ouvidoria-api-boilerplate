@@ -40,8 +40,10 @@ class PermissionSeeder extends Seeder
     private function createPermissions(Collection $permissions): void
     {
         $permissions->each(function (array $permission) {
-            $permission = app(config('permission.models.permission'))->make($permission);
-            $permission->saveOrFail();
+            app(config('permission.models.permission'))->firstOrCreate(
+                ['name' => $permission['name'], 'guard_name' => config('auth.defaults.guard', 'api')],
+                ['description' => $permission['description']]
+            );
         });
     }
 
@@ -59,14 +61,16 @@ class PermissionSeeder extends Seeder
     private function createRoles(Collection $roles): void
     {
         $roles->each(function (array $role) {
-            $role = app(config('permission.models.role'))->make($role);
-            $role->saveOrFail();
+            app(config('permission.models.role'))->withoutGlobalScopes()->firstOrCreate(
+                ['name' => $role['name'], 'guard_name' => config('auth.defaults.guard', 'api')],
+                ['description' => $role['description']]
+            );
         });
     }
 
     private function assignPermissionsToRoles(): void
     {
-        $roles = $this->getRoles()->filter(fn (array $role) => $role['name'] !== DefaultRoles::SUPER_ADMIN->value);
+        $roles = $this->getRoles()->filter(fn(array $role) => $role['name'] !== DefaultRoles::SUPER_ADMIN->value);
 
         $roles->each(function (array $role) {
             $role = app(config('permission.models.role'))->where('name', $role['name'])->first();
@@ -74,7 +78,7 @@ class PermissionSeeder extends Seeder
             $permissions = DefaultRoles::from($role['name'])->permissions();
 
             $permissions = collect($permissions)
-                ->map(fn (Permissions $permission) => app(config('permission.models.permission'))->where('name', $permission->value)->first());
+                ->map(fn(Permissions $permission) => app(config('permission.models.permission'))->where('name', $permission->value)->first());
 
             $role->givePermissionTo($permissions);
         });
