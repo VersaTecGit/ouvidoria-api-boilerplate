@@ -14,10 +14,10 @@ use Throwable;
  * Artisan Command — Importação de Emendas do DECRETO Nº 134/2026
  *
  * Uso:
- *   php artisan emendas:importar-decreto
- *   php artisan emendas:importar-decreto --dry-run
- *   php artisan emendas:importar-decreto --file=/caminho/personalizado/decreto.docx
- *   php artisan emendas:importar-decreto --dry-run --verbose
+ *   php artisan emendas:importar-decreto --tenant=ID
+ *   php artisan emendas:importar-decreto --tenant=ID --dry-run
+ *   php artisan emendas:importar-decreto --tenant=ID --file=/caminho/personalizado/decreto.docx
+ *   php artisan emendas:importar-decreto --tenant=ID --dry-run --verbose
  */
 class ImportarEmendasDecretoCommand extends Command
 {
@@ -25,11 +25,12 @@ class ImportarEmendasDecretoCommand extends Command
      * Assinatura do comando com opções configuráveis.
      */
     protected $signature = 'emendas:importar-decreto
+                            {--tenant= : O ID do tenant para o qual a importação será executada (obrigatório)}
                             {--file= : Caminho do arquivo .docx (padrão: ANEXO DO DECRETO 134 DE 2026.docx na raiz)}
                             {--dry-run : Simula a importação sem gravar no banco de dados}
                             {--force : Força a execução mesmo se houver avisos de CNPJ inválido}';
 
-    protected $description = 'Importa as emendas parlamentares individuais do Decreto nº 134/2026 a partir do arquivo .docx';
+    protected $description = 'Importa as emendas parlamentares individuais do Decreto nº 134/2026 a partir do arquivo .docx em um tenant específico';
 
     public function __construct(
         private readonly DecretoDocxParserService        $parser,
@@ -44,6 +45,25 @@ class ImportarEmendasDecretoCommand extends Command
      */
     public function handle(): int
     {
+        $tenantId = $this->option('tenant');
+
+        if (empty($tenantId)) {
+            $this->error('  ✖ A opção --tenant é obrigatória. Use: php artisan emendas:importar-decreto --tenant=ID');
+            return self::FAILURE;
+        }
+
+        if (str_contains($tenantId, ',')) {
+            $this->error('  ✖ A importação deve ser executada para apenas um tenant por vez.');
+            return self::FAILURE;
+        }
+
+        $tenant = tenancy()->find($tenantId);
+
+        if (!$tenant) {
+            $this->error("  ✖ Tenant com ID '{$tenantId}' não foi encontrado.");
+            return self::FAILURE;
+        }
+
         $dryRun  = $this->option('dry-run');
         $filePath = $this->resolveFilePath();
 
@@ -69,40 +89,55 @@ class ImportarEmendasDecretoCommand extends Command
             $this->printTranslationPreview($translatedRows);
         }
 
-        // ── Verificação de CNPJs inválidos antes de persistir ─────────────────
-        $cnpjInvalidos = array_filter($translatedRows, fn($r) => ($r['recebedor']['cnpj_valido'] ?? true) === false);
-        if (count($cnpjInvalidos) > 0 && !$this->option('force') && !$dryRun) {
-            $this->warn(sprintf(
-                '  ⚠  %d emenda(s) com CNPJ inválido. Use --force para importar mesmo assim.',
-                count($cnpjInvalidos)
-            ));
-            foreach ($cnpjInvalidos as $r) {
-                $this->line(sprintf(
-                    '     → Row %d | Emenda %s | CNPJ: %s | Recebedor: %s',
-                    $r['_meta']['source_row'],
-                    $r['emenda']['numero'] ?? '?',
-                    $r['recebedor']['cnpj'] ?? 'nulo',
-                    $r['recebedor']['razao_social'] ?? '?'
-                ));
-            }
-        }
+        $allSuccessful = true;
 
-        // ── Etapa 4: Persistência ─────────────────────────────────────────────
-        $mode = $dryRun ? '<fg=yellow>DRY-RUN</>' : '<fg=cyan>LIVE</>';
-        $this->info("  ⏳ Etapa 3/3 — Persistindo no banco [{$mode}]...");
+        $this->newLine();
+        $this->line('┌─────────────────────────────────────────────────────────┐');
+        $this->line(sprintf('│  <fg=cyan;options=bold>Processando Tenant ID: %s</>', str_pad((string) $tenant->getTenantKey(), 30)));
+        $this->line('└─────────────────────────────────────────────────────────┘');
+        $this->newLine();
+
+        // Inicializa a tenancy
+        tenancy()->initialize($tenant);
 
         try {
-            $report = $this->persistir->handle($translatedRows, $dryRun);
+            // Verificação de CNPJs inválidos antes de persistir
+            $cnpjInvalidos = array_filter($translatedRows, fn($r) => ($r['recebedor']['cnpj_valido'] ?? true) === false);
+            if (count($cnpjInvalidos) > 0 && !$this->option('force') && !$dryRun) {
+                $this->error(sprintf(
+                    '  ✖  %d emenda(s) com CNPJ inválido. Importação abortada. Use --force para importar mesmo assim.',
+                    count($cnpjInvalidos)
+                ));
+                foreach ($cnpjInvalidos as $r) {
+                    $this->line(sprintf(
+                        '     → Row %d | Emenda %s | CNPJ: %s | Recebedor: %s',
+                        $r['_meta']['source_row'],
+                        $r['emenda']['numero'] ?? '?',
+                        $r['recebedor']['cnpj'] ?? 'nulo',
+                        $r['recebedor']['razao_social'] ?? '?'
+                    ));
+                }
+                $allSuccessful = false;
+            } else {
+                // Persistência
+                $mode = $dryRun ? '<fg=yellow>DRY-RUN</>' : '<fg=cyan>LIVE</>';
+                $this->info("  ⏳ Etapa 3/3 — Persistindo no banco [{$mode}]...");
+
+                $report = $this->persistir->handle($translatedRows, $dryRun);
+
+                // Relatório final deste tenant
+                $this->printReport($report, $dryRun);
+            }
         } catch (Throwable $e) {
-            $this->error("  ✖ Falha crítica na persistência: {$e->getMessage()}");
-            $this->error('  A transação foi revertida. Nenhum dado foi gravado.');
-            return self::FAILURE;
+            $this->error(sprintf('  ✖ Falha crítica na persistência do Tenant %s: %s', $tenant->getTenantKey(), $e->getMessage()));
+            $this->error('  A transação foi revertida para este tenant.');
+            $allSuccessful = false;
+        } finally {
+            // Encerra a tenancy
+            tenancy()->end();
         }
 
-        // ── Relatório Final ───────────────────────────────────────────────────
-        $this->printReport($report, $dryRun);
-
-        return self::SUCCESS;
+        return $allSuccessful ? self::SUCCESS : self::FAILURE;
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -149,7 +184,7 @@ class ImportarEmendasDecretoCommand extends Command
         foreach (array_slice($rows, 0, 5) as $row) {
             $tableRows[] = [
                 $row['emenda']['numero'] ?? '-',
-                mb_strimwidth($row['emenda']['responsavel'] ?? '-', 0, 25, '…'),
+                mb_strimwidth($row['concedente']['nome'] ?? '-', 0, 25, '…'),
                 mb_strimwidth($row['recebedor']['razao_social'] ?? '-', 0, 30, '…'),
                 $row['recebedor']['cnpj'] ?? '-',
                 'R$ ' . number_format((float) ($row['emenda']['valor'] ?? 0), 2, ',', '.'),

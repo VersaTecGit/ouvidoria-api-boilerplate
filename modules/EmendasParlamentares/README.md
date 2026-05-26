@@ -16,6 +16,7 @@ php artisan emendas:importar-decreto [opções]
 
 | Opção | Descrição | Valor Padrão |
 | :--- | :--- | :--- |
+| `--tenant=ID` | O ID do tenant no qual o decreto será importado. **(Obrigatório)** | - |
 | `--dry-run` | Simula toda a execução, valida dados, CNPJs e duplicidades sem gravar no banco de dados. | `false` |
 | `--file=caminho` | Caminho personalizado para o arquivo `.docx`. | `ANEXO DO DECRETO 134 DE 2026.docx` na raiz do projeto |
 | `--force` | Ignora o bloqueio de CNPJs inválidos e força a persistência dessas linhas com um aviso. | `false` |
@@ -25,26 +26,27 @@ php artisan emendas:importar-decreto [opções]
 
 ## 💡 Exemplos de Uso
 
-### 1. Simulação Completa (Recomendado)
-Sempre execute uma simulação em modo verboso antes de persistir os dados reais para conferir se o mapeamento lógico e a tradução estão de acordo com o esperado:
+### 1. Importação para um Tenant Específico (Obrigatório e Exclusivo)
+Para rodar a importação em um tenant (ex: `localhost`), execute:
 ```bash
-php artisan emendas:importar-decreto --dry-run --verbose
+php artisan emendas:importar-decreto --tenant=localhost --force
 ```
 
-### 2. Importação em Produção / Homologação (Persistindo no Banco)
+### 2. Simulação Completa em um Tenant (Recomendado)
+Sempre execute uma simulação em modo verboso antes de persistir os dados reais para conferir se o mapeamento lógico e a tradução estão de acordo com o esperado:
 ```bash
-php artisan emendas:importar-decreto
+php artisan emendas:importar-decreto --tenant=localhost --dry-run --verbose
 ```
 
 ### 3. Forçando Importação mesmo com CNPJs Inválidos
 Por padrão, se houver registros com CNPJs fora do padrão estrutural de 14 dígitos (como a emenda 109, que contém erro de digitação no anexo), o script emitirá alertas e bloqueará a importação para garantir a integridade. Você pode forçar a importação com:
 ```bash
-php artisan emendas:importar-decreto --force
+php artisan emendas:importar-decreto --tenant=localhost --force
 ```
 
 ### 4. Executando um Arquivo em Outro Diretório
 ```bash
-php artisan emendas:importar-decreto --file="/caminho/para/outro/decreto_anexo.docx"
+php artisan emendas:importar-decreto --tenant=localhost --file="/caminho/para/outro/decreto_anexo.docx" --force
 ```
 
 ---

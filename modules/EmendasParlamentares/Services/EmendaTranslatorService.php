@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Modules\EmendasParlamentares\Services;
 
-use Illuminate\Support\Str;
-
 /**
  * Etapa 3 do pipeline de importação.
  *
@@ -20,13 +18,6 @@ final class EmendaTranslatorService
      * Exercício fiscal fixo extraído do Decreto (Decreto nº 134/2026).
      */
     private const EXERCICIO = '2026';
-
-    /**
-     * Nome do concedente único deste decreto.
-     * O concedente é a Câmara Municipal (órgão que deliberou o decreto).
-     */
-    private const CONCEDENTE_NOME = 'Câmara Municipal de Caratinga';
-    private const CONCEDENTE_TIPO = 'Legislativo Municipal';
 
     /**
      * Município e UF padrão (inferidos do contexto do decreto).
@@ -86,12 +77,16 @@ final class EmendaTranslatorService
         $translated = [];
 
         foreach ($parsedRows as $row) {
+            $recebedor  = $this->buildRecebedor($row);
+            $emenda     = $this->buildEmenda($row, $recebedor['tipo']);
+            $concedente = $this->buildConcedente($row);
+
             $translated[] = [
-                '_meta'           => $row['_meta'],
-                'emenda'          => $this->buildEmenda($row),
-                'concedente'      => $this->buildConcedente(),
-                'recebedor'       => $this->buildRecebedor($row),
-                'partido_vereador' => $this->normalizePartido($row['partido_raw'] ?? ''),
+                '_meta'            => $row['_meta'],
+                'emenda'           => $emenda,
+                'concedente'       => $concedente,
+                'recebedor'        => $recebedor,
+                'partido_vereador' => $concedente['partido'],
             ];
         }
 
@@ -106,28 +101,44 @@ final class EmendaTranslatorService
      * Monta o array de dados para a tabela `emendas`.
      *
      * @param array<string, mixed> $row
+     * @param string               $recebedorTipo
      * @return array<string, mixed>
      */
-    private function buildEmenda(array $row): array
+    private function buildEmenda(array $row, string $recebedorTipo): array
     {
+        $modalidadeId = 4; // Outros
+        if ($recebedorTipo === 'entidade') {
+            $modalidadeId = 2; // Transferência entidade
+        } elseif ($recebedorTipo === 'prefeitura' || $recebedorTipo === 'estado') {
+            $modalidadeId = 3; // Transferência governamental
+        }
+
+        $tipoObjeto = $this->inferTipoObjeto($row['justificativa_raw'] ?? '');
+        $gnd = 'outro';
+        if ($tipoObjeto === 'saude' || $tipoObjeto === 'assistencia_social') {
+            $gnd = 'gnd3';
+        } elseif ($tipoObjeto === 'infraestrutura') {
+            $gnd = 'gnd4';
+        }
+
         return [
             // Campos explícitos do documento
             'numero'          => $this->formatNumero($row['numero'] ?? null, self::EXERCICIO),
             'exercicio'       => self::EXERCICIO,
-            'responsavel'     => $this->normalizeName($row['vereador_raw'] ?? ''),
+            'responsavel'     => 'Não informado',
             'descricao_objeto' => $this->normalizeDescricao($row['justificativa_raw'] ?? ''),
             'valor'           => $row['valor'],
 
             // Campos inferidos por heurística
-            'tipo_objeto'     => $this->inferTipoObjeto($row['justificativa_raw'] ?? ''),
+            'tipo_objeto'     => $tipoObjeto,
             'tipo_origem'     => 'Municipal',
 
             // Valores fixos/padrão para este decreto
             'status'          => 'pendente',
             'rascunho'        => false,
             'anuencia_sus'    => false,
-            'gnd'             => null,          // não disponível no documento
-            'modalidade_id'   => null,          // requer configuração externa
+            'gnd'             => $gnd,
+            'modalidade_id'   => $modalidadeId,
 
             // FKs resolvidas na etapa de persistência
             'concedente_id'   => null,          // preenchido pelo PersistirAction
@@ -137,18 +148,22 @@ final class EmendaTranslatorService
 
     /**
      * Monta o array de dados para a tabela `concedentes`.
-     * O concedente é único e fixo para todo o decreto.
+     * O concedente é o vereador autor da emenda.
      *
+     * @param array<string, mixed> $row
      * @return array<string, mixed>
      */
-    private function buildConcedente(): array
+    private function buildConcedente(array $row): array
     {
+        $vereadorNome = $this->normalizeName($row['vereador_raw'] ?? '');
+        $partido      = $this->normalizePartido($row['partido_raw'] ?? '');
+
         return [
-            '_resolved_by' => 'fixed_context',
-            'nome'         => self::CONCEDENTE_NOME,
-            'tipo'         => self::CONCEDENTE_TIPO,
-            'partido'      => null,    // partido pertence ao vereador, não ao concedente
-            'descricao'    => 'Câmara Municipal de Caratinga — Emendas Impositivas Individuais Decreto nº 134/2026',
+            '_resolved_by' => 'row_context',
+            'nome'         => $vereadorNome,
+            'tipo'         => 'Vereador',
+            'partido'      => $partido,
+            'descricao'    => "Vereador(a) autor(a) de Emenda Impositiva Decreto nº 134/2026",
         ];
     }
 
@@ -167,12 +182,12 @@ final class EmendaTranslatorService
         return [
             '_resolved_by' => 'cnpj_lookup',
             'razao_social' => $razaoSocial,
-            'cnpj'         => $cnpj,
-            'cnpj_valido'  => ($cnpjDigits !== null && strlen($cnpjDigits) === 14),
+            'cnpj'         => $cnpjDigits !== '' ? $cnpjDigits : null,
+            'cnpj_valido'  => ($cnpjDigits !== '' && strlen($cnpjDigits) === 14),
             'tipo'         => $this->inferTipoRecebedor($razaoSocial),
             'municipio'    => self::MUNICIPIO_PADRAO,
             'uf'           => self::UF_PADRAO,
-            'codigo_ibge'  => null,  // não disponível no documento
+            'codigo_ibge'  => 3113404, // Código IBGE de Caratinga/MG
         ];
     }
 

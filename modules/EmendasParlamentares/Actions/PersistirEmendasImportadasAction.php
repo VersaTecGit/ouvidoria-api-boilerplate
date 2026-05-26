@@ -56,24 +56,9 @@ final class PersistirEmendasImportadasAction
 
         try {
             DB::transaction(function () use ($translatedRows, &$report) {
-                // ── 1. Resolve Concedente (único para todo o decreto) ──────────
-                $concedenteData = $translatedRows[0]['concedente'] ?? null;
-                if ($concedenteData === null) {
-                    throw new \RuntimeException('Nenhuma linha válida para importar.');
-                }
-
-                $concedente = Concedente::firstOrCreate(
-                    ['nome' => $concedenteData['nome']],
-                    [
-                        'tipo'      => $concedenteData['tipo'],
-                        'partido'   => $concedenteData['partido'],
-                        'descricao' => $concedenteData['descricao'],
-                    ]
-                );
-
-                // ── 2. Itera cada emenda ───────────────────────────────────────
+                // ── Itera cada emenda ───────────────────────────────────────
                 foreach ($translatedRows as $row) {
-                    $this->persistRow($row, $concedente, $report);
+                    $this->persistRow($row, $report);
                 }
             });
         } catch (Throwable $e) {
@@ -96,13 +81,27 @@ final class PersistirEmendasImportadasAction
      * @param array<string, mixed>    $row
      * @param array<string, mixed>    $report por referência
      */
-    private function persistRow(array $row, Concedente $concedente, array &$report): void
+    private function persistRow(array $row, array &$report): void
     {
         $meta     = $row['_meta'];
         $emendaData = $row['emenda'];
         $recData    = $row['recebedor'];
+        $concedenteData = $row['concedente'] ?? null;
 
         try {
+            if ($concedenteData === null) {
+                throw new \RuntimeException('Dados do concedente não informados nesta linha.');
+            }
+
+            // Resolve Concedente específico desta linha (vereador)
+            $concedente = Concedente::updateOrCreate(
+                ['nome' => $concedenteData['nome']],
+                [
+                    'tipo'      => $concedenteData['tipo'],
+                    'partido'   => $concedenteData['partido'],
+                    'descricao' => $concedenteData['descricao'],
+                ]
+            );
             // ── Aviso: CNPJ inválido (não rejeita, importa com aviso) ──
             if (isset($recData['cnpj_valido']) && $recData['cnpj_valido'] === false) {
                 $report['avisos'][] = sprintf(
@@ -134,7 +133,7 @@ final class PersistirEmendasImportadasAction
                 'tipo_objeto'     => $emendaData['tipo_objeto'],
                 'status'          => $emendaData['status'],
                 'gnd'             => $emendaData['gnd'],
-                'descricao_objeto'=> $emendaData['descricao_objeto'],
+                'descricao_objeto' => $emendaData['descricao_objeto'],
                 'valor'           => $emendaData['valor'],
                 'responsavel'     => $emendaData['responsavel'],
                 'anuencia_sus'    => $emendaData['anuencia_sus'],
@@ -142,7 +141,7 @@ final class PersistirEmendasImportadasAction
 
             // Garante que campos boolean não sejam filtrados pelo array_filter
             $emendaPayload['rascunho']    = $emendaData['rascunho'];
-            $emendaPayload['anuencia_sus']= $emendaData['anuencia_sus'];
+            $emendaPayload['anuencia_sus'] = $emendaData['anuencia_sus'];
 
             $existing = Emenda::where('numero', $emendaData['numero'])
                 ->where('exercicio', $emendaData['exercicio'])
@@ -154,7 +153,7 @@ final class PersistirEmendasImportadasAction
 
                 Log::info('[ImportarEmendas] Emenda atualizada', [
                     'numero'   => $emendaData['numero'],
-                    'exercicio'=> $emendaData['exercicio'],
+                    'exercicio' => $emendaData['exercicio'],
                 ]);
             } else {
                 Emenda::create(array_merge($emendaPayload, [
@@ -164,7 +163,7 @@ final class PersistirEmendasImportadasAction
 
                 Log::info('[ImportarEmendas] Emenda criada', [
                     'numero'   => $emendaData['numero'],
-                    'exercicio'=> $emendaData['exercicio'],
+                    'exercicio' => $emendaData['exercicio'],
                 ]);
             }
         } catch (Throwable $e) {
@@ -214,7 +213,7 @@ final class PersistirEmendasImportadasAction
             'tipo'         => $data['tipo'],
             'municipio'    => $data['municipio'],
             'uf'           => $data['uf'],
-            'codigo_ibge'  => $data['codigo_ibge'] ?? '',
+            'codigo_ibge'  => $data['codigo_ibge'] ?? 3113404,
         ]);
 
         return [$recebedor, true];
