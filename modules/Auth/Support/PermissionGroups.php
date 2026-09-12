@@ -20,6 +20,8 @@ enum PermissionGroups: string
     case CONFIG_THEMES = 'Configurações:Temas';
     case CONFIG_VERSA360 = 'Configurações:Versa 360';
 
+    case OUVIDORIA_UNITS = 'Ouvidoria:Unidades';
+
     case OTHERS_TRANSPORT = 'Outros:Logística e Transporte';
     case OTHERS_MISC = 'Outros:Diversos';
 
@@ -41,6 +43,8 @@ enum PermissionGroups: string
             str_contains($permissionName, 'logs') => self::ACCESS_LOGS,
 
             str_contains($permissionName, 'vehicle') => self::OTHERS_TRANSPORT,
+
+            str_contains($permissionName, 'unit') => self::OUVIDORIA_UNITS,
 
             default => self::OTHERS_MISC,
         };
@@ -88,6 +92,7 @@ enum PermissionGroups: string
             'Questionários' => 'Configuração, resposta e gestão de questionários utilizados pelo sistema.',
             'Logs' => 'Monitoramento e auditoria de acessos ao sistema.',
             'Configurações' => 'Parâmetros de configuração geral e personalização da plataforma.',
+            'Ouvidoria' => 'Gestão das manifestações recebidas pela ouvidoria e suas unidades destinatárias.',
             'Outros' => 'Módulos auxiliares como relatórios, denúncias e transporte.',
             default => 'Módulo do sistema.',
         };
@@ -109,6 +114,8 @@ enum PermissionGroups: string
             self::CONFIG_ADS => 'Gerencia banners exibidos na tela de login.',
             self::CONFIG_THEMES => 'Gerencia temas visuais da plataforma.',
             self::CONFIG_VERSA360 => 'Configurações e controle da integração Versa 360.',
+
+            self::OUVIDORIA_UNITS => 'Gerencia as unidades da ouvidoria, destinatárias das manifestações.',
 
             self::OTHERS_TRANSPORT => 'Gerencia logística e transporte.',
             self::OTHERS_MISC => 'Funcionalidades diversas complementares.',

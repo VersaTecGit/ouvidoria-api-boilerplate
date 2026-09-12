@@ -93,6 +93,12 @@ enum Permissions: string
     case EDIT_VEHICLE_TRIPS = 'ALL-edit-vehicle-trips';
     case DELETE_VEHICLE_TRIPS = 'ALL-delete-vehicle-trips';
 
+    case LIST_UNITS = 'ALL-list-units';
+    case VIEW_UNITS = 'ALL-view-units';
+    case CREATE_UNITS = 'ALL-create-units';
+    case EDIT_UNITS = 'ALL-edit-units';
+    case DELETE_UNITS = 'ALL-delete-units';
+
     public static function all(): array
     {
         return [
@@ -182,6 +188,12 @@ enum Permissions: string
             self::VIEW_VEHICLE_TRIPS,
             self::EDIT_VEHICLE_TRIPS,
             self::DELETE_VEHICLE_TRIPS,
+
+            self::LIST_UNITS,
+            self::VIEW_UNITS,
+            self::CREATE_UNITS,
+            self::EDIT_UNITS,
+            self::DELETE_UNITS,
         ];
     }
 
@@ -280,6 +292,12 @@ enum Permissions: string
             self::VIEW_VEHICLE_TRIPS => 'Visualizar viagens',
             self::EDIT_VEHICLE_TRIPS => 'Editar viagens',
             self::DELETE_VEHICLE_TRIPS => 'Deletar viagens',
+
+            self::LIST_UNITS => 'Listar unidades',
+            self::VIEW_UNITS => 'Visualizar unidades',
+            self::CREATE_UNITS => 'Criar unidades',
+            self::EDIT_UNITS => 'Editar unidades',
+            self::DELETE_UNITS => 'Deletar unidades',
         };
     }
 
@@ -370,6 +388,12 @@ enum Permissions: string
             self::VIEW_VEHICLE_TRIPS => 'Permite que o usuário visualize detalhes das viagens realizadas pelos veículos cadastrados no sistema.',
             self::EDIT_VEHICLE_TRIPS => 'Permite que o usuário edite as viagens realizadas pelos veículos cadastrados no sistema.',
             self::DELETE_VEHICLE_TRIPS => 'Permite que o usuário delete as viagens realizadas pelos veículos cadastrados no sistema.',
+
+            self::LIST_UNITS => 'Permite que o usuário liste as unidades cadastradas no sistema.',
+            self::VIEW_UNITS => 'Permite que o usuário visualize os detalhes das unidades cadastradas no sistema.',
+            self::CREATE_UNITS => 'Permite que o usuário cadastre novas unidades no sistema.',
+            self::EDIT_UNITS => 'Permite que o usuário edite as unidades cadastradas no sistema.',
+            self::DELETE_UNITS => 'Permite que o usuário delete as unidades cadastradas no sistema.',
 
             default => 'Detalhes não disponíveis para esta permissão.',
         };

@@ -11,4 +11,5 @@ return [
     'Tenant',
     'Questionnaires',
     'Transport',
+    'Ouvidoria',
 ];
