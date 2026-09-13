@@ -99,6 +99,12 @@ enum Permissions: string
     case EDIT_UNITS = 'ALL-edit-units';
     case DELETE_UNITS = 'ALL-delete-units';
 
+    case LIST_DESTINATION_AGENCIES = 'ALL-list-destination-agencies';
+    case VIEW_DESTINATION_AGENCIES = 'ALL-view-destination-agencies';
+    case CREATE_DESTINATION_AGENCIES = 'ALL-create-destination-agencies';
+    case EDIT_DESTINATION_AGENCIES = 'ALL-edit-destination-agencies';
+    case DELETE_DESTINATION_AGENCIES = 'ALL-delete-destination-agencies';
+
     public static function all(): array
     {
         return [
@@ -194,6 +200,12 @@ enum Permissions: string
             self::CREATE_UNITS,
             self::EDIT_UNITS,
             self::DELETE_UNITS,
+
+            self::LIST_DESTINATION_AGENCIES,
+            self::VIEW_DESTINATION_AGENCIES,
+            self::CREATE_DESTINATION_AGENCIES,
+            self::EDIT_DESTINATION_AGENCIES,
+            self::DELETE_DESTINATION_AGENCIES,
         ];
     }
 
@@ -298,6 +310,12 @@ enum Permissions: string
             self::CREATE_UNITS => 'Criar unidades',
             self::EDIT_UNITS => 'Editar unidades',
             self::DELETE_UNITS => 'Deletar unidades',
+
+            self::LIST_DESTINATION_AGENCIES => 'Listar órgãos destinatários',
+            self::VIEW_DESTINATION_AGENCIES => 'Visualizar órgãos destinatários',
+            self::CREATE_DESTINATION_AGENCIES => 'Criar órgãos destinatários',
+            self::EDIT_DESTINATION_AGENCIES => 'Editar órgãos destinatários',
+            self::DELETE_DESTINATION_AGENCIES => 'Deletar órgãos destinatários',
         };
     }
 
@@ -394,6 +412,12 @@ enum Permissions: string
             self::CREATE_UNITS => 'Permite que o usuário cadastre novas unidades no sistema.',
             self::EDIT_UNITS => 'Permite que o usuário edite as unidades cadastradas no sistema.',
             self::DELETE_UNITS => 'Permite que o usuário delete as unidades cadastradas no sistema.',
+
+            self::LIST_DESTINATION_AGENCIES => 'Permite que o usuário liste os órgãos e secretarias destinatários das manifestações.',
+            self::VIEW_DESTINATION_AGENCIES => 'Permite que o usuário visualize os detalhes dos órgãos e secretarias destinatários das manifestações.',
+            self::CREATE_DESTINATION_AGENCIES => 'Permite que o usuário cadastre novos órgãos e secretarias destinatários das manifestações.',
+            self::EDIT_DESTINATION_AGENCIES => 'Permite que o usuário edite os órgãos e secretarias destinatários das manifestações.',
+            self::DELETE_DESTINATION_AGENCIES => 'Permite que o usuário delete os órgãos e secretarias destinatários das manifestações.',
 
             default => 'Detalhes não disponíveis para esta permissão.',
         };

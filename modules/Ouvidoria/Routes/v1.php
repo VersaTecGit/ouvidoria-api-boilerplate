@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
+use Modules\Ouvidoria\Controllers\DestinationAgencyController;
 use Modules\Ouvidoria\Controllers\UnitController;
 use Modules\Ouvidoria\Controllers\UnitTypeController;
 
@@ -21,12 +22,24 @@ Route::middleware('auth')->group(function () {
             Route::delete('/', [UnitController::class, 'destroy'])->can('ALL-delete-units');
         });
     });
+
+    Route::prefix('destination-agencies')->group(function () {
+        Route::get('/', [DestinationAgencyController::class, 'index'])->can('ALL-list-destination-agencies');
+        Route::post('/', [DestinationAgencyController::class, 'store'])->can('ALL-create-destination-agencies');
+
+        Route::prefix('{uuid}')->group(function () {
+            Route::get('/', [DestinationAgencyController::class, 'show'])->can('ALL-view-destination-agencies');
+            Route::put('/', [DestinationAgencyController::class, 'update'])->can('ALL-edit-destination-agencies');
+            Route::delete('/', [DestinationAgencyController::class, 'destroy'])->can('ALL-delete-destination-agencies');
+        });
+    });
 });
 
 /*
  * Public routes: consumed by the unauthenticated manifestation form.
- * Serves only active units through PublicUnitResource.
+ * Serve only active records, through minimal public resources.
  */
 Route::prefix('public')->group(function () {
     Route::get('units', [UnitController::class, 'publicIndex'])->middleware('throttle:60,1');
+    Route::get('destination-agencies', [DestinationAgencyController::class, 'publicIndex'])->middleware('throttle:60,1');
 });

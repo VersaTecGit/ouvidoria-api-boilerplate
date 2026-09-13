@@ -1,7 +1,7 @@
 # Plano de Desenvolvimento — Módulo Ouvidoria
 
 > Documento de handoff. Uma nova sessão deve ler este arquivo antes de escrever código.
-> Última atualização: 2026-09-12 — **Fase 1 concluída e validada em execução.**
+> Última atualização: 2026-09-12 — **Fase 2 concluída e validada em execução.**
 
 ## Contexto
 
@@ -115,7 +115,7 @@ ou notas internas. Mais `throttle` como higiene de abuso em rota anônima.
 ## Fases
 
 - [x] **Fase 1 — Units** ✅ concluída e validada em execução
-- [ ] **Fase 2 — Órgãos/Secretarias** (`destination_agencies`) ← próxima
+- [x] **Fase 2 — Órgãos/Secretarias** (`destination_agencies`) ✅ concluída e validada em execução
 - [ ] **Fase 3 — Manifestações** (migration, models, enums, DTOs, actions, controller, resources, rotas)
 - [ ] **Fase 4 — Endpoint público enxuto** (`PublicManifestationResource` + throttle + gerador de protocolo)
 - [ ] **Fase 5 — Upload público** (signed URL, padrão `PublicQuestionnaireSignedStorageUrlController`, `throttle:10,1`)
@@ -147,7 +147,7 @@ Vínculo com usuário é `unit_user` (não `operator_unit`).
 
 Hierarquia futura entre setores: `parent_unit_id` é aditivo, não migra dados.
 
-### Fase 2 — próxima
+### Fase 2 — entregue
 
 Tabela de domínio, migrável para `units` depois (decisão do usuário):
 
@@ -158,7 +158,74 @@ destination_agencies: id, uuid, name, active, order, timestamps, softDeletes, us
 Mesmo formato de chave de `units` (referenciada por UUID na API). Quando virar
 unidade: `INSERT ... SELECT` + troca de FK, sem tocar no contrato público —
 o front sempre mandou UUID e o select sempre consumiu `{id, name}`.
-Endpoint público `GET /public/destination-agencies` alimenta o combo.
+
+Criado em `modules/Ouvidoria/`, espelhando o padrão da Fase 1:
+
+- Migration `2026_09_12_110000_create_destination_agencies_table.php`
+- Model `DestinationAgency` (global scope `active-destination-agencies`)
+- DTOs `CreateDestinationAgencyDTO`, `UpdateDestinationAgencyDTO`
+- `DestinationAgencyFilters` (`active`, `created_at`)
+- Actions: Create, Fetch, FetchDestinationAgenciesList, Update, Delete
+- `DestinationAgencyController` (CRUD + `publicIndex`)
+- Resources `DestinationAgencyResource` e `PublicDestinationAgencyResource` (só `id` + `name`)
+- `DestinationAgencySeeder` — 9 órgãos baseline, idempotente (`firstOrCreate` por nome),
+  `order` em múltiplos de 10 para permitir inserção entre itens sem renumerar
+- Modificados: `Routes/v1.php`, `Permissions.php` (5 permissões nos 4 pontos),
+  `PermissionGroups.php` (grupo `Ouvidoria:Órgãos Destinatários`), `DatabaseSeeder.php`
+
+**Ordenação:** `FetchDestinationAgenciesList` aplica `orderBy('order')->orderBy('name')`
+como padrão. `Datatable::applySort` é no-op quando `sort_field` vem vazio, então o
+sort explícito do cliente continua vencendo — o default só vale para o combo público.
+
+**Atenção ao `PermissionGroups::fromPermission`:** o `match` é uma cadeia de
+`str_contains` avaliada em ordem. O arm de `destination-agencies` foi colocado
+**antes** do de `unit`. Hoje não há colisão entre os dois, mas a ordem importa
+para qualquer permissão futura cujo nome contenha o substring de outra.
+
+**Órgãos do seeder são genéricos** (Gabinete + 8 secretarias comuns) — trocar
+pelos órgãos reais do município antes de ir a produção.
+
+### Estado da verificação (Fase 2)
+
+Validado em execução real:
+
+- Migration aplicada; tabela conferida no `psql` com todas as colunas, os 4 índices
+  (`name`, `active`, `order`, `uuid` unique) e as 3 FKs de `userActions`
+- `DestinationAgencySeeder` executou: 9 órgãos com UUID gerado e acentuação correta
+- `route:list` mostra as **6 rotas** (5 CRUD autenticadas + 1 pública)
+- `GET /api/v1/public/destination-agencies` → **HTTP 200 sem auth**, só `{id, name}`,
+  `X-RateLimit-Limit: 60`, ordenado por `order`
+- `GET`/`POST /destination-agencies` e `GET /destination-agencies/{uuid}` → **401** sem token
+- Órgão desativado (`active = false`) → **sai do endpoint público** (9 → 8);
+  linha restaurada depois, zero inativos no banco
+- **CRUD autenticado exercitado de ponta a ponta** com JWT do `admin`:
+  `GET` lista → **200** com payload completo; `POST` → **201** (default `active: true`
+  aplicado pelo DTO); `PUT` parcial → **200** (renomeia e desativa, `order` preservado);
+  `GET /{uuid}` de registro **inativo** → **200** (o `FetchDestinationAgency` tira o
+  global scope, então a gestão enxerga o que o público não enxerga); `DELETE` → **204**
+  e o `GET` seguinte → **404**, com soft delete confirmado no banco
+- Registro de teste removido; estado final: 9 órgãos vivos, 0 inativos
+
+### Armadilha encontrada na Fase 2 — 403 por permissão não semeada
+
+A primeira tentativa de CRUD autenticado devolveu **403** (não 401): o JWT autenticava,
+mas o `->can('ALL-list-destination-agencies')` barrava. As 5 permissões estavam no enum
+`Permissions.php` mas **não no banco** — faltava rodar o `PermissionSeeder`:
+
+```bash
+php artisan tenants:seed --class='Database\Seeders\PermissionSeeder'
+```
+
+Depois disso, as 5 permissões aparecem em `permissions` e o CRUD passa. Não exigiu
+mudança de código: `DefaultRoles::ADMIN` já mapeia para `Permissions::all()`.
+
+**Custo do ambiente:** `POST /auth/login` levou **38-58s** nesta máquina (o `GET`
+público responde instantâneo). Não investigado — se atrapalhar, olhar custo do
+bcrypt e contenção do container. Use `-m` generoso no curl ao testar login.
+
+**O `LoginDTO` espera o campo `login`** (não `username`) no corpo do POST.
+
+**Não há tela** para órgãos destinatários — o frontend do módulo é a Fase 6.
 
 ## Convenções do projeto (seguir)
 
@@ -171,6 +238,11 @@ Endpoint público `GET /public/destination-agencies` alimenta o combo.
 - Listagens via `Datatable::applyFilter/applySort/applyPagination` + `Filters`
 - `Permissions::description()` é `match` **exaustivo sem default** — faltar um caso quebra em runtime.
   Registrar toda permissão nova em 4 pontos: enum, `all()`, `description()`, `detail()`
+- **Registrar no enum não basta:** as permissões só passam a valer depois de rodar o
+  `PermissionSeeder` (`php artisan tenants:seed --class='Database\Seeders\PermissionSeeder'`),
+  que grava em `permissions` e sincroniza com os papéis. Sem esse passo a rota autenticada
+  responde **403** (autentica, mas o `->can()` barra) — sintoma fácil de confundir com bug
+  de código. Não é preciso mexer em `DefaultRoles`: `ADMIN` mapeia para `Permissions::all()`.
 - Rota pública: prefixo `/public`, sempre com `throttle`, sempre com Resource próprio enxuto
 
 ## Ambiente (já configurado)

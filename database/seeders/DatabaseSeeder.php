@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
                 UserSeeder::class,
                 PermissionSeeder::class,
                 UnitSeeder::class,
+                DestinationAgencySeeder::class,
             ]);
         } else {
             $this->call([
