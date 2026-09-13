@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
 use Modules\Ouvidoria\Controllers\DestinationAgencyController;
+use Modules\Ouvidoria\Controllers\ManifestationController;
 use Modules\Ouvidoria\Controllers\UnitController;
 use Modules\Ouvidoria\Controllers\UnitTypeController;
 
@@ -31,6 +32,21 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [DestinationAgencyController::class, 'show'])->can('ALL-view-destination-agencies');
             Route::put('/', [DestinationAgencyController::class, 'update'])->can('ALL-edit-destination-agencies');
             Route::delete('/', [DestinationAgencyController::class, 'destroy'])->can('ALL-delete-destination-agencies');
+        });
+    });
+
+    Route::prefix('manifestations')->group(function () {
+        Route::get('/', [ManifestationController::class, 'index'])->can('ALL-list-manifestations');
+        Route::post('/', [ManifestationController::class, 'store'])->can('ALL-create-manifestations');
+
+        Route::prefix('{uuid}')->group(function () {
+            Route::get('/', [ManifestationController::class, 'show'])->can('ALL-view-manifestations');
+            Route::put('/', [ManifestationController::class, 'update'])->can('ALL-edit-manifestations');
+            Route::delete('/', [ManifestationController::class, 'destroy'])->can('ALL-delete-manifestations');
+
+            // Answering the citizen is a distinct act from editing the triage fields.
+            Route::post('respond', [ManifestationController::class, 'respond'])->can('ALL-respond-manifestations');
+            Route::post('logs', [ManifestationController::class, 'storeLog'])->can('ALL-respond-manifestations');
         });
     });
 });

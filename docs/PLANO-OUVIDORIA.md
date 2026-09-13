@@ -1,7 +1,7 @@
 # Plano de Desenvolvimento — Módulo Ouvidoria
 
 > Documento de handoff. Uma nova sessão deve ler este arquivo antes de escrever código.
-> Última atualização: 2026-09-13 — **Fase 2 concluída e validada em execução; Fase 7 implementada (inerte até a Fase 6).**
+> Última atualização: 2026-09-13 — **Fase 3 concluída e validada em execução; Fase 7 implementada (inerte até a Fase 6).**
 
 ## Contexto
 
@@ -116,7 +116,7 @@ ou notas internas. Mais `throttle` como higiene de abuso em rota anônima.
 
 - [x] **Fase 1 — Units** ✅ concluída e validada em execução
 - [x] **Fase 2 — Órgãos/Secretarias** (`destination_agencies`) ✅ concluída e validada em execução
-- [ ] **Fase 3 — Manifestações** (migration, models, enums, DTOs, actions, controller, resources, rotas)
+- [x] **Fase 3 — Manifestações** (migration, models, enums, DTOs, actions, controller, resources, rotas) ✅ concluída e validada em execução
 - [ ] **Fase 4 — Endpoint público enxuto** (`PublicManifestationResource` + throttle + gerador de protocolo)
 - [ ] **Fase 5 — Upload público** (signed URL, padrão `PublicQuestionnaireSignedStorageUrlController`, `throttle:10,1`)
 - [ ] **Fase 6 — Frontend** (rotas públicas, layout, form, tela de conclusão com protocolo, timeline; telas internas)
@@ -226,6 +226,134 @@ bcrypt e contenção do container. Use `-m` generoso no curl ao testar login.
 **O `LoginDTO` espera o campo `login`** (não `username`) no corpo do POST.
 
 **Não há tela** para órgãos destinatários — o frontend do módulo é a Fase 6.
+
+### Fase 3 — entregue (2026-09-13)
+
+Backend completo da gestão autenticada. O endpoint público de criação e a
+consulta por protocolo ficaram para a Fase 4, como o plano prevê — o gerador
+de protocolo já está no model e em uso.
+
+Duas tabelas:
+
+```
+manifestations:      id, uuid, protocol_number (unique), type, status,
+                     destination_agency_id, unit_id, subject, description,
+                     occurrence_place, is_anonymous, user_id,
+                     manifestant_{name,email,phone,document,address},
+                     parecer, responded_by_id, responded_at,
+                     timestamps, softDeletes, userActions
+manifestation_logs:  id, uuid, manifestation_id, content, is_public, status,
+                     author_id, timestamps, softDeletes, userActions
+```
+
+- Migration `2026_09_13_120000_create_manifestations_tables.php`
+- Enums em `Support/`: `ManifestationType` (6 tipos), `ManifestationStatus` (4 status)
+- Models `Manifestation` (HasMedia, `cascadeDeletes: logs`) e `ManifestationLog`
+- Rule `Rules/CpfOrCnpj` — delega para `Cpf`/`Cnpj` por contagem de dígitos
+- DTOs: `CreateManifestationDTO`, `UpdateManifestationDTO`,
+  `RespondManifestationDTO`, `CreateManifestationLogDTO`
+- `ManifestationFilters` + `WhereDestinationAgencyIdFilter` / `WhereUnitIdFilter`
+- Actions: Create, Fetch, FetchManifestationsList, Update, Delete,
+  CreateManifestationLog, RespondManifestation
+- Resources `ManifestationResource` (completo), `ManifestationListResource`
+  (enxuto para datatable) e `ManifestationLogResource`
+- `ManifestationController` — CRUD + `respond` + `storeLog`
+- Modificados: `Routes/v1.php` (7 rotas), `Permissions.php` (6 permissões nos
+  4 pontos), `PermissionGroups.php` (grupo `Ouvidoria:Manifestações`)
+
+**Manifestante é coluna, não entidade — e por quê.** Não existe módulo de
+pessoas neste repositório: a única entidade de pessoa é `Modules\Auth\Models\User`,
+que **não serve** como manifestante — `login` é unique, `password` é NOT NULL,
+não há auto-registro (as rotas públicas de `Auth` são só login/refresh/reset) e
+não há CPF, telefone nem endereço. Criar `users` a partir de um POST anônimo
+abriria criação de contas não autenticada no mesmo banco que autentica os
+atendentes. Os dados ficam planos em `manifestant_*`: são o registro do que foi
+declarado **naquele momento**, que continua correto mesmo se a pessoa mudar de
+e-mail depois.
+
+**`user_id` é a porta aberta para o portal do cidadão** (decisão do usuário):
+FK nullable já criada e indexada, sempre NULL hoje. Quando o portal existir,
+o vínculo é preenchido por e-mail/CPF — sem migração de dados e sem tocar no
+contrato público. Aditivo, como o `parent_unit_id` da Fase 1.
+
+**Anonimato validado no backend, não só no front.** O DTO usa
+`exclude_if:is_anonymous,true` + `required_if:is_anonymous,false`, e o
+`CreateManifestation` ainda anula os campos antes do `save()`. É redundante de
+propósito: o endpoint da Fase 4 é alcançável sem passar pelo formulário.
+
+**`parecer` e timeline andam juntos.** `RespondManifestation` grava o parecer,
+`responded_by_id`, `responded_at`, move para `respondida` **e** emite o log
+`is_public = true` na mesma transação — o cidadão lê a timeline, não a coluna,
+então um parecer sem log seria invisível para quem manifestou.
+`CreateManifestationLog::write()` é compartilhado pelas duas actions.
+
+**`ManifestationListResource` existe para não pagar anexo por linha.** A
+listagem omite `description`, `logs`, manifestante completo e anexos — cada
+anexo custaria uma URL temporária por registro na datatable.
+
+### Armadilha encontrada na Fase 3 — `->constrained()->index()` colide
+
+Encadear `->index()` depois de `->constrained()` **consome o nome da constraint**:
+o Laravel nomeia todas as FKs da tabela como `"1"` e a segunda estoura
+`SQLSTATE[42710] Duplicate object: constraint "1" already exists`. Na Fase 1
+passou despercebido porque `units` tem uma FK só.
+
+Correto: `->constrained()` sozinho, e `$table->index('coluna', 'nome_idx')` em
+linha separada quando o índice for desejado. **O Postgres não indexa FK
+automaticamente** — só cria a constraint. Foram criados dois índices explícitos
+(`manifestations_agency_idx`, `manifestation_logs_manifestation_idx`); as demais
+FKs seguem sem índice, como em `units.unit_type_id` da Fase 1.
+
+### Armadilha do ambiente — Git Bash engole a saída do `docker compose exec`
+
+Rodar `docker compose exec -T laravel.test php artisan ...` pelo **Bash** devolve
+**exit 0 e saída vazia**, mesmo quando o comando falha. Foi isso que escondeu o
+erro de FK acima por várias tentativas, simulando um "travamento". Use
+**PowerShell** para qualquer artisan cujo resultado importe.
+
+Dois sintomas relacionados, ambos do filesystem 9p do Docker Desktop:
+`php artisan` chega a travar em `p9_client_rpc` (visível em `/proc/<pid>/wchan`,
+estado `Ds`) e um `exec` pesado já derrubou o container do `pgsql` com exit 137.
+Se acontecer: `kill -9` no processo e `docker compose up -d` para reerguer.
+
+**`curl -m` curto dá falso negativo:** um POST que atingiu o timeout do curl
+**gravou** no banco mesmo assim; o retry criou registro duplicado. Use `-m 240`
+e confira o banco antes de repetir um POST.
+
+### Estado da verificação (Fase 3)
+
+Validado em execução real:
+
+- Migration aplicada; schema conferido no `psql` — 26 colunas em `manifestations`,
+  13 em `manifestation_logs`, todas as FKs nomeadas, `ON DELETE SET NULL` em
+  `unit_id`/`user_id`/`responded_by_id`/`author_id` e cascade em `manifestation_id`
+- `tenants:rollback --step=1` + `migrate` refeitos limpos — o `down()` funciona
+- As 6 permissões `ALL-*-manifestations` gravadas em `permissions` pelo `PermissionSeeder`
+- `route:list --path=manifestations` mostra as **7 rotas**
+- `GET`/`POST /manifestations` → **401** sem token
+- **POST identificada** → **201** com `OUV-2026-7D77065E`, status `recebida`
+- **POST anônima com dados de manifestante no payload** → **201** e as 5 colunas
+  `manifestant_*` gravadas **NULL no banco** (conferido no `psql`): o anonimato
+  não depende do frontend
+- **POST identificada sem nome/e-mail/telefone** → **422** com os 3 erros
+- CPF inválido → **422**; CNPJ válido (14 dígitos) → **201** — `CpfOrCnpj` ok
+- `POST /{uuid}/logs` com `is_public: false` + `status` → **201**, autor gravado
+  e a manifestação movida para `em_analise`
+- `POST /{uuid}/respond` → **200**: `parecer`, `responded_by`, `responded_at`,
+  status `respondida` e timeline com **2 logs** (1 interno + 1 público)
+- `PUT` parcial de triagem → **200** (status e subject trocados, resto preservado)
+- Filtros `status`, `type` e `destination_agency_id` (por UUID) e `search`
+  (com `unaccent`) retornam o esperado
+- `DELETE` → **204**, `GET` seguinte → **404**, soft delete confirmado no banco
+- `ManifestationListResource` conferido no JSON: sem `description`, sem `logs`,
+  sem anexos
+- Registros de teste removidos; estado final: 0 manifestações, 0 logs,
+  Fases 1 e 2 intactas
+- **Pint limpo** nos 60 arquivos de `modules/Ouvidoria` + `modules/Auth/Support`
+  (corrigido de passagem um `use` não utilizado pré-existente em `DeleteUnit.php`).
+  Não há config de PHPStan no projeto
+
+**Não há tela** para manifestações — o frontend do módulo é a Fase 6.
 
 ### Fase 7 — entregue (2026-09-13)
 
