@@ -1,7 +1,7 @@
 # Plano de Desenvolvimento — Módulo Ouvidoria
 
 > Documento de handoff. Uma nova sessão deve ler este arquivo antes de escrever código.
-> Última atualização: 2026-09-12 — **Fase 2 concluída e validada em execução.**
+> Última atualização: 2026-09-13 — **Fase 2 concluída e validada em execução; Fase 7 implementada (inerte até a Fase 6).**
 
 ## Contexto
 
@@ -120,7 +120,7 @@ ou notas internas. Mais `throttle` como higiene de abuso em rota anônima.
 - [ ] **Fase 4 — Endpoint público enxuto** (`PublicManifestationResource` + throttle + gerador de protocolo)
 - [ ] **Fase 5 — Upload público** (signed URL, padrão `PublicQuestionnaireSignedStorageUrlController`, `throttle:10,1`)
 - [ ] **Fase 6 — Frontend** (rotas públicas, layout, form, tela de conclusão com protocolo, timeline; telas internas)
-- [ ] **Fase 7 — Liberar acesso** (`proxy.ts` + `AuthProvider.tsx`)
+- [x] **Fase 7 — Liberar acesso** (`proxy.ts` + `AuthProvider.tsx`) ✅ implementada — **inerte até a Fase 6** (ver abaixo)
 - [ ] **Fase 8 — Testes** (criação anônima sem token, consulta por protocolo, gestão exigindo auth, regressão de não-vazamento)
 
 ### Fase 1 — entregue
@@ -226,6 +226,37 @@ bcrypt e contenção do container. Use `-m` generoso no curl ao testar login.
 **O `LoginDTO` espera o campo `login`** (não `username`) no corpo do POST.
 
 **Não há tela** para órgãos destinatários — o frontend do módulo é a Fase 6.
+
+### Fase 7 — entregue (2026-09-13)
+
+Feita **fora de ordem**, antes das Fases 3–6, por ser isolada e estar em outro
+repositório (`ui-boilerplate`), sem colidir com a Fase 2. Branch:
+`feat/fase-7-acesso-publico-ouvidoria`, commit `681dc51` (2 arquivos, 4 linhas).
+
+**O prefixo público escolhido é `/ouvidoria`.** A Fase 6 **deve** criar
+`ui-boilerplate/app/ouvidoria/` — não `app/manifestacoes/` nem `app/manifestations/`.
+Se o diretório usar outro nome, o bypass não casa e o visitante anônimo será
+redirecionado para `/auth/login`. Optou-se pelo nome do serviço (reconhecível pelo
+cidadão, cobre form e consulta) em vez do nome da entidade; as rotas internas seguem
+em inglês, mas esta é URL pública.
+
+As três camadas, todas independentes de sessão:
+
+1. `ui-boilerplate/proxy.ts` — `/ouvidoria` somado ao `isPublicPage`, junto de
+   `/questionnaires`
+2. `ui-boilerplate/modules/Auth/Providers/AuthProvider.tsx` — early-return no catch
+   do `refreshUserData`
+3. Rotas Laravel — **já estavam prontas**: `Route::prefix('public')` em
+   `modules/Ouvidoria/Routes/v1.php` fica fora do `Route::middleware('auth')`, e o
+   `ModuleServiceProvider` aplica só `tenant`/`api`/`InitializeTenancyByRequestData`
+
+**Não testável de ponta a ponta ainda:** `app/ouvidoria/` não existe até a Fase 6,
+então a mudança é inerte. O teste real do fluxo anônimo acontece na Fase 6/8.
+
+**Ruído de ambiente:** um `npm install` no Windows reescreve `package-lock.json`
+removendo blocos `"libc": ["glibc"|"musl"]` de dependências nativas opcionais, sem
+que `package.json` mude. Isso **não** deve ser commitado — reverta com
+`git checkout -- package-lock.json` antes de fechar um commit no `ui-boilerplate`.
 
 ## Convenções do projeto (seguir)
 
