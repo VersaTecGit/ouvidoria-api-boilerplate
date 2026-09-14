@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Modules\Questionnaires\Support;
+namespace Modules\Common\Core\Support;
 
 use Aws\S3\S3Client;
 use InvalidArgumentException;
 
-final class PublicQuestionnaireSignedStorageUrlService
+class SignedStorageUrlService
 {
     public function generate(
         string $key,
