@@ -1,7 +1,9 @@
 services:
     laravel.test:
         build:
-            context: ./vendor/laravel/sail/runtimes/8.4
+            # Publicado do Sail (`artisan sail:publish`): o vendor vive num volume, então o
+            # contexto de build não pode depender dele.
+            context: ./docker/8.4
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
@@ -20,6 +22,11 @@ services:
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
         volumes:
             - '.:/var/www/html'
+            # O vendor fica fora do bind mount. No Docker Desktop (Windows) o código em C:\
+            # chega ao container por 9p; os ~15 mil arquivos do vendor por esse caminho custam
+            # ~15 s a cada processo PHP. No volume (ext4 do Docker) caem para <1 s.
+            # Popular: `docker compose exec laravel.test composer install`.
+            - 'sail-vendor:/var/www/html/vendor'
         networks:
             - sail
         depends_on:
@@ -36,7 +43,7 @@ services:
             POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
         volumes:
             - 'sail-pgsql:/var/lib/postgresql/data'
-            - './vendor/laravel/sail/database/pgsql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql'
+            - './docker/pgsql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql'
         networks:
             - sail
         healthcheck:
@@ -111,4 +118,6 @@ volumes:
     sail-redis:
         driver: local
     sail-minio:
+        driver: local
+    sail-vendor:
         driver: local
