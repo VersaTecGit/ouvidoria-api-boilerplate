@@ -1,7 +1,7 @@
 # Plano de Desenvolvimento — Módulo Ouvidoria
 
 > Documento de handoff. Uma nova sessão deve ler este arquivo antes de escrever código.
-> Última atualização: 2026-09-13 — **Fase 6 (frontend) entregue; Fase 7 validada de ponta a ponta; suíte da API 206/206 verde após correção do vazamento de throttle nos testes.**
+> Última atualização: 2026-09-14 — **Fase 8 entregue: API 243/243, e2e Playwright 8/8 (fluxo anônimo com anexo no MinIO e regressão de não-vazamento no navegador).**
 
 ## Contexto
 
@@ -121,7 +121,7 @@ ou notas internas. Mais `throttle` como higiene de abuso em rota anônima.
 - [x] **Fase 5 — Upload público** (signed URL, `throttle:10,1`) ✅ concluída — 9/9 testes verdes
 - [x] **Fase 6 — Frontend** (rotas públicas, layout, form, tela de conclusão com protocolo, timeline; telas internas) ✅ entregue em 2026-09-13 — `tsc`/`eslint`/`prettier` limpos, fluxo anônimo validado via curl (ver abaixo)
 - [x] **Fase 7 — Liberar acesso** (`proxy.ts` + `AuthProvider.tsx`) ✅ concluída — validada de ponta a ponta com a Fase 6 (ver abaixo)
-- [ ] **Fase 8 — Testes** (criação anônima sem token, consulta por protocolo, gestão exigindo auth, regressão de não-vazamento)
+- [x] **Fase 8 — Testes** (criação anônima sem token, consulta por protocolo, gestão exigindo auth, regressão de não-vazamento) ✅ entregue em 2026-09-14 — API **243/243**, Playwright **8/8** (ver abaixo)
 
 ### Fase 1 — entregue
 
@@ -445,6 +445,90 @@ gerada fora dos testes (que mockam o serviço). Interações de tela (máscaras,
 combobox, dropzone) também não — só compilação e contrato. **Fase 8** deve cobrir:
 fluxo anônimo com anexo em ambiente com S3/minio, login e clique nas telas
 internas, e regressão de não-vazamento no `PublicManifestationResource`.
+
+### Fase 8 — entregue (2026-09-14)
+
+Branches: `feature/ouvidoria-fase-8` (API, sobre a `fase-4-5`) e
+`feat/fase-8-testes` (UI, sobre a `fase-6`).
+
+**API — `tests/Feature/Ouvidoria/OuvidoriaAuthGuardTest.php` (37 testes).** O que
+faltava do backend: as **18 rotas de gestão** (units, unit-types,
+destination-agencies, manifestations incluindo `respond` e `logs`) respondem
+**401** sem token e **403** com token de usuário sem papel; `public/*` segue
+aberta ao mesmo chamador. Criação anônima, consulta por protocolo e o
+não-vazamento do `PublicManifestationResource` já estavam cobertos pelas Fases
+4/5. Suíte completa: **243 passaram**, 1858 asserções, ~78 s.
+
+**Upload de anexo fora do mock — MinIO no `compose.development.yml`.**
+Serviços `minio` (`quay.io/minio/minio` — as imagens `minio/*` saíram do Docker
+Hub) e `minio-init` (cria o bucket, idempotente). Console em
+`http://localhost:8900` (`sail`/`password`). Variáveis no `.env`:
+
+```
+AWS_ACCESS_KEY_ID=sail  AWS_SECRET_ACCESS_KEY=password  AWS_BUCKET=versa-ouvidoria-local
+AWS_USE_PATH_STYLE_ENDPOINT=true
+AWS_ENDPOINT=http://minio:9000            # PHP -> minio (DNS do compose)
+AWS_PUBLIC_ENDPOINT=http://localhost:9000 # navegador -> minio (porta publicada)
+```
+
+Por que **dois endpoints**: do WSL e do navegador, `host.docker.internal` não
+responde (firewall do Windows), só `localhost:9000`; do container, só `minio:9000`.
+O SigV4 assina o **host**, então a URL tem de ser assinada para o nome que o
+navegador vai usar. Dois problemas reais apareceram e foram corrigidos:
+
+- `SignedStorageUrlService` **não passava `endpoint`** ao `S3Client` e lia a
+  config do disco `s3`, não do `central` (de onde o anexo é lido depois) —
+  qualquer host customizado ganhava URL da AWS. Agora assina contra o `central`,
+  com `public_endpoint` quando houver.
+- Os **links temporários de download** do atendente (`ManifestationResource`)
+  saíam com `minio:9000`. O `temporary_url` do Laravel **não resolve**: troca o
+  host *depois* de assinar → `SignatureDoesNotMatch`. Criado
+  `Modules\Common\Core\Support\PublicEndpointUrlGenerator` (Spatie
+  `url_generator`), que assina contra o `public_endpoint` do disco da mídia
+  (`MEDIA_DISK` = `s3`). Com a variável vazia é o gerador padrão — produção na
+  AWS não muda.
+
+Validado por curl e depois no navegador: signed URL em `localhost:9000` → `PUT`
+200 → create 201 → media gravada → download pelo link do atendente 200 com os
+mesmos bytes.
+
+**Front — Playwright (`ui-boilerplate/e2e/`, 8 testes, ~30 s).**
+`npm run test:e2e` (ou `test:e2e:ui`). Reaproveita o dev server na 3001; API e
+MinIO precisam estar de pé. Chromium headless em `~/.cache/ms-playwright`.
+
+| Spec | Cobre |
+|---|---|
+| `ouvidoria-publico.spec.ts` (5) | `/ouvidoria` sem cookie com combos carregados; `/manifestations` sem cookie → `/auth/login`; **anônimo com anexo PDF → MinIO → tela de conclusão → copiar protocolo (clipboard) → consulta**, e o assunto nunca aparece na consulta; identificado sem dados barrado e anonimizar limpa os erros; protocolo malformado/inexistente |
+| `ouvidoria-interno.spec.ts` (3, serial) | login do `admin` pela tela; lista mostra a manifestação; nota interna + andamento público ("Em análise") + parecer; **consulta pública em contexto sem cookie mostra parecer e andamento e nunca a nota interna** |
+
+**Armadilhas da suíte e2e:**
+- `POST public/manifestations` tem throttle **10/min por IP**, e tudo (curl,
+  navegador, helper) chega ao container pelo mesmo IP. Rodar a suíte várias
+  vezes por minuto dá **429** — é o throttle funcionando. O helper
+  `apiCreatePublicManifestation` espera o `Retry-After` e tenta de novo.
+- Seletores seguem o que a página **expõe**, não o que o código sugere:
+  `CardTitle` do shadcn é `div` (não `heading`); o trigger do `Combobox` (cmdk)
+  não herda o rótulo do `FormLabel` — só o placeholder o identifica; o título
+  das páginas internas é o **breadcrumb** (`link`), não `heading`; após
+  submeter um dialog, espere `getByRole("dialog")` sumir antes de ler a
+  timeline (o texto casa com o próprio textarea). Nomes de botão com
+  `exact: true` quando há prefixo em comum ("Registrar" × "Registrar andamento").
+- O `afterAll` apaga pela API (**soft delete**); as linhas com `deleted_at`
+  ficam no tenant. Limpeza dura, se quiser:
+  `delete from manifestations where subject like '[e2e]%'` (antes, `media` e
+  `manifestation_logs`).
+- Chromium do Playwright precisa de libs do sistema (`libnss3`, `libnspr4`,
+  `libasound2t64`, `libxaw7`…). Sem sudo funcional no Ubuntu, instale do
+  PowerShell: `wsl -d Ubuntu -u root apt-get install -y libnspr4 libnss3
+  libasound2t64 libxaw7 libxfont2 libxkbfile1 libxmu6 libxpm4 libxt6t64
+  libfontenc1 libice6 libsm6` (numa linha só — o PowerShell quebra colagens longas).
+- Identidade git do Ubuntu configurada em 2026-09-13
+  (`glauber <glaubercosta@versatecnologia.com.br>`); a senha de `sudo` do
+  usuário não é conhecida — `wsl -d Ubuntu -u root passwd glauber` redefine.
+
+**Fora do escopo desta fase, para depois:** merge das branches em `main`
+(Fases 4→8 na API, 6→8 na UI) e troca dos órgãos genéricos do seeder pelos
+reais antes de produção.
 
 ### Fase 7 — entregue (2026-09-13)
 
