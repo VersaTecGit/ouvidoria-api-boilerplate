@@ -118,6 +118,28 @@ class PublicManifestationsApiTest extends AuthenticatedTestCase
         $this->assertSame(0, Manifestation::query()->count());
     }
 
+    public function test_create_without_is_anonymous_flag_is_rejected(): void
+    {
+        $agency = DestinationAgenciesHelper::createTestDestinationAgency();
+
+        // A caller reaching the endpoint outside the form omits the flag entirely.
+        // It must not slip through defaulting to identified-with-empty-contact.
+        $payload = ManifestationsHelper::dumbPublicManifestationData($agency->uuid);
+        unset(
+            $payload['is_anonymous'],
+            $payload['manifestant_name'],
+            $payload['manifestant_email'],
+            $payload['manifestant_phone'],
+        );
+
+        $response = $this->postJson('/api/v1/public/manifestations', $payload, self::PUBLIC_HEADERS);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->assertJsonValidationErrors(['is_anonymous']);
+
+        $this->assertSame(0, Manifestation::query()->count());
+    }
+
     public function test_attachment_key_outside_public_prefix_is_rejected(): void
     {
         $agency = DestinationAgenciesHelper::createTestDestinationAgency();

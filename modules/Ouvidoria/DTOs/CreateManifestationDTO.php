@@ -57,7 +57,11 @@ class CreateManifestationDTO extends ValidatedDTO
             'subject' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'occurrence_place' => ['required', 'string', 'max:255'],
-            'is_anonymous' => ['sometimes', 'boolean'],
+            // Required, not `sometimes`: an omitted flag skips the `required_if` below
+            // (ValidatedDTO validates the raw request; `defaults()` runs only after), so
+            // it would file an identified manifestation with no contact info. The form
+            // always sends the flag explicitly.
+            'is_anonymous' => ['required', 'boolean'],
 
             /*
              * The backend half of the anonymity rule. The frontend hides these
