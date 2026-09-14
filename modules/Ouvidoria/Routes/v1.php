@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Route;
 use Modules\Ouvidoria\Controllers\DestinationAgencyController;
 use Modules\Ouvidoria\Controllers\ManifestationController;
+use Modules\Ouvidoria\Controllers\PublicManifestationController;
 use Modules\Ouvidoria\Controllers\UnitController;
 use Modules\Ouvidoria\Controllers\UnitTypeController;
 
@@ -53,9 +54,19 @@ Route::middleware('auth')->group(function () {
 
 /*
  * Public routes: consumed by the unauthenticated manifestation form.
- * Serve only active records, through minimal public resources.
+ * Serve only active records, through minimal public resources. There is no
+ * user to key on, so every route here is throttled by IP.
  */
 Route::prefix('public')->group(function () {
     Route::get('units', [UnitController::class, 'publicIndex'])->middleware('throttle:60,1');
     Route::get('destination-agencies', [DestinationAgencyController::class, 'publicIndex'])->middleware('throttle:60,1');
+
+    Route::prefix('manifestations')->group(function () {
+        Route::post('/', [PublicManifestationController::class, 'store'])->middleware('throttle:10,1');
+
+        // The protocol is a bearer secret: constrain the shape so junk never reaches the query.
+        Route::get('{protocol}', [PublicManifestationController::class, 'show'])
+            ->where('protocol', 'OUV-\d{4}-[A-F0-9]{8}')
+            ->middleware('throttle:30,1');
+    });
 });
