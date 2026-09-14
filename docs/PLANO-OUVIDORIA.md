@@ -1,7 +1,7 @@
 # Plano de Desenvolvimento — Módulo Ouvidoria
 
 > Documento de handoff. Uma nova sessão deve ler este arquivo antes de escrever código.
-> Última atualização: 2026-09-14 — **Fase 8 entregue: API 243/243, e2e Playwright 8/8 (fluxo anônimo com anexo no MinIO e regressão de não-vazamento no navegador).**
+> Última atualização: 2026-09-14 — **Fase 8 entregue (API 243/243, e2e 8/8). Ambiente consolidado numa única cópia em `C:\`: vendor em volume Docker, UI e Playwright nativos no Windows; a cópia do WSL foi removida.**
 
 ## Contexto
 
@@ -517,14 +517,10 @@ MinIO precisam estar de pé. Chromium headless em `~/.cache/ms-playwright`.
   ficam no tenant. Limpeza dura, se quiser:
   `delete from manifestations where subject like '[e2e]%'` (antes, `media` e
   `manifestation_logs`).
-- Chromium do Playwright precisa de libs do sistema (`libnss3`, `libnspr4`,
-  `libasound2t64`, `libxaw7`…). Sem sudo funcional no Ubuntu, instale do
-  PowerShell: `wsl -d Ubuntu -u root apt-get install -y libnspr4 libnss3
-  libasound2t64 libxaw7 libxfont2 libxkbfile1 libxmu6 libxpm4 libxt6t64
-  libfontenc1 libice6 libsm6` (numa linha só — o PowerShell quebra colagens longas).
-- Identidade git do Ubuntu configurada em 2026-09-13
-  (`glauber <glaubercosta@versatecnologia.com.br>`); a senha de `sudo` do
-  usuário não é conhecida — `wsl -d Ubuntu -u root passwd glauber` redefine.
+- (Histórico, válido só se voltar a rodar o Playwright dentro do WSL: o Chromium
+  precisa de `libnss3`, `libnspr4`, `libasound2t64`, `libxaw7`…, instaláveis do
+  PowerShell com `wsl -d Ubuntu -u root apt-get install -y ...`.) Desde 14/09 o
+  Playwright roda **nativo no Windows** e nada disso é necessário.
 
 **Fora do escopo desta fase, para depois:** merge das branches em `main`
 (Fases 4→8 na API, 6→8 na UI) e troca dos órgãos genéricos do seeder pelos
@@ -669,12 +665,11 @@ Descartados com evidência: Xdebug (carregado, `XDEBUG_MODE=off`) e OPcache CLI
 que não sofre" não era comparação válida. O diagnóstico anterior (só memória do
 host) explicava a oscilação, não o piso de 15–30 s por bootstrap.
 
-**Solução aplicada (2026-09-13):** código movido para a distro **Ubuntu** do WSL2
-(ext4), compose executado de dentro dela, UI com Node 22 via nvm no Ubuntu. O
-`.wslconfig` (`memory=6GB`, `swap=2GB`) continua valendo. A cópia em
-`C:\Users\Glauber\codes\versa_ouvidoria` ficou como **backup congelado**: não
-edite nem rode `docker compose` a partir dela (mesmo nome de projeto → o `up`
-recriaria o container apontando o mount de volta para o NTFS).
+**Solução aplicada em 13/09 (superada em 14/09):** código movido para o ext4 do
+WSL, gerando duas cópias e a confusão que se seguiu. **Revisão de 2026-09-14:** o
+A/B acima estava certo sobre o 9p, mas o que pesa é o `vendor` — com ele num
+volume Docker o código pode ficar em `C:\` (0,85 s de bootstrap). Ver "Ambiente".
+O `.wslconfig` (`memory=6GB`, `swap=2GB`) continua valendo para a VM do Docker.
 
 **Testes nunca em paralelo.** `RefreshDatabaseWithTenant` faz `DROP DATABASE` no
 tenant `foo` e o `RefreshDatabase` roda `migrate:fresh` no `testing` central: duas
@@ -701,31 +696,57 @@ Uma rodada por vez, sempre.
 
 ## Ambiente (já configurado)
 
-**Onde o código vive (desde 2026-09-13):** distro **Ubuntu** do WSL2, em
-`/home/glauber/codes/versa_ouvidoria/` (`api-boilerplate/` e `ui-boilerplate/`).
-Do Windows: `\\wsl.localhost\Ubuntu\home\glauber\codes\versa_ouvidoria`. Abrir no
-VS Code com **Remote-WSL** (`code .` de dentro do Ubuntu). Todos os comandos abaixo
-rodam **dentro do Ubuntu** (`wsl -d Ubuntu`), nunca do PowerShell/Git Bash do Windows.
+**Uma cópia só, em `C:\Users\Glauber\codes\versa_ouvidoria\`** (desde 2026-09-14).
+A cópia em `/home/glauber/codes/versa_ouvidoria` (WSL) foi removida; o WSL volta
+a ser apenas a VM onde o Docker Desktop mora — não se abre terminal nele nem se
+guarda código lá. Tudo abaixo roda do **PowerShell** (ou do Claude Code aberto em
+`C:\...`).
 
-**API** — Docker Sail, em `~/codes/versa_ouvidoria/api-boilerplate/`:
+**Por que isso funciona agora (e não funcionava em 13/09):** o código em `C:\`
+chega ao container por 9p, e passar os ~15 mil arquivos do `vendor` por esse
+caminho custava ~15 s **por processo PHP** (medido: `artisan --version` 15,7 s;
+o mesmo no VersaSocial). O `vendor` saiu do bind mount para um **volume Docker**
+(`sail-vendor`) e o custo caiu para 0,85 s — o resto do código (centenas de
+arquivos) passa pelo 9p sem dor. Suíte completa: 108 s (ext4 dava 78 s).
+Detalhes e números no commit `9fd6074`.
 
-```bash
-WWWGROUP=1000 WWWUSER=1000 docker compose -f compose.development.yml up -d
+**API** — Docker Sail, em `C:\...\api-boilerplate\`:
+
+```powershell
+docker compose -f compose.development.yml up -d
 docker compose -f compose.development.yml exec laravel.test php artisan <cmd>
-docker compose -f compose.development.yml exec -T laravel.test php artisan test tests/Feature/<Modulo>/<Arquivo>Test.php
+docker compose -f compose.development.yml exec -T laravel.test php artisan test
 ```
 
-Volumes `api-boilerplate_sail-pgsql` e `api-boilerplate_sail-redis` são os mesmos de
-antes (dados preservados). uid/gid 1000 do Ubuntu = `sail` no container, então a
-armadilha do `chown storage/` deixou de existir.
+- `vendor` **não existe no `C:\`** — vive no volume `api-boilerplate_sail-vendor`.
+  `composer install/update` sempre via `exec laravel.test composer ...`. Na
+  **primeira** subida o volume está vazio e o `artisan serve` do supervisord
+  morre até desistir: rode `composer install` e depois
+  `docker compose restart laravel.test`. Para autocomplete na IDE, um
+  `composer install --ignore-platform-reqs` local com o PHP do Herd serve (só leitura).
+- Runtime do Sail publicado em `docker/8.4` e init do pgsql em `docker/pgsql`
+  (`artisan sail:publish`), porque o compose não pode depender do `vendor`.
+- Volumes de dados `sail-pgsql`, `sail-redis`, `sail-minio` são os mesmos de antes.
+- `WWWUSER`/`WWWGROUP` estão no `.env`.
 
-**UI** — `cd ~/codes/versa_ouvidoria/ui-boilerplate && npm run dev` (Node 22 via nvm,
-já instalado no Ubuntu; `node_modules` foi reinstalado com `npm ci` no Linux).
+**UI** — Node nativo do Windows (22.14 em `C:\Program Files\nodejs`), sem Docker:
+
+```powershell
+cd C:\Users\Glauber\codes\versa_ouvidoria\ui-boilerplate
+npm ci                     # nunca `npm install` no Windows: ele apaga blocos "libc" do lock
+npm run dev -- -p 3001
+npm run test:e2e           # Playwright sobe o dev server sozinho se a 3001 estiver livre
+```
+
+O Chromium do Playwright está em `%LOCALAPPDATA%\ms-playwright` (instalado com
+`npx playwright install chromium`, sem apt/sudo). `.gitattributes` com
+`* text=auto eol=lf` nos dois repos neutraliza o `core.autocrlf=true` do git do Windows.
 
 | Item | Valor |
 |---|---|
 | API | http://localhost:8090/api/v1 |
-| Frontend | http://localhost:3001 (3000 estava ocupada) |
+| Frontend | http://localhost:3001 |
+| MinIO | API http://localhost:9000 · console http://localhost:8900 (`sail`/`password`) |
 | Login | `admin` / `password` |
 | Tenant | `localhost` (header `X-Domain`, derivado do host pelo front) |
 | Banco | `tenant_localhost_versa_boilerplate` (PostgreSQL 15) |
@@ -733,6 +754,10 @@ já instalado no Ubuntu; `node_modules` foi reinstalado com `npm ci` no Linux).
 **Portas remapeadas** por conflito com outro projeto (`financia-frontend` ocupava a 5173):
 `APP_PORT=8090`, `VITE_PORT=5174`, `REVERB_PORT=8081`. Estão no `.env`
 (fora do git) — o `.env.example` segue com as originais.
+
+**Git:** o git do Windows tem o Credential Manager e acessa o GitLab; foi por ele
+que as branches das Fases 2–8 subiram em 2026-09-14. Identidade global do git no
+Windows **não** está configurada (`git config --global user.name/user.email`).
 
 ### Armadilhas já encontradas
 

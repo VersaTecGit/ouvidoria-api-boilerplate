@@ -25,7 +25,9 @@ services:
             # O vendor fica fora do bind mount. No Docker Desktop (Windows) o código em C:\
             # chega ao container por 9p; os ~15 mil arquivos do vendor por esse caminho custam
             # ~15 s a cada processo PHP. No volume (ext4 do Docker) caem para <1 s.
-            # Popular: `docker compose exec laravel.test composer install`.
+            # Popular: `docker compose exec laravel.test composer install`. Na primeira subida o
+            # volume esta vazio e o `artisan serve` do supervisord morre ate o supervisord
+            # desistir — depois do composer install, `docker compose restart laravel.test`.
             - 'sail-vendor:/var/www/html/vendor'
         networks:
             - sail
