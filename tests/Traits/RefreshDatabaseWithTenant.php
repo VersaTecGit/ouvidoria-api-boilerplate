@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Traits;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\ParallelTesting;
 use Illuminate\Support\Facades\URL;
@@ -21,6 +22,19 @@ trait RefreshDatabaseWithTenant
     public function beginDatabaseTransaction()
     {
         $this->initializeTenant();
+
+        /*
+         * The cache store sits on the central connection, and nothing below
+         * wraps it: once tenancy is initialized both entries of
+         * $connectionsToTransact resolve to the tenant connection. Anything
+         * cached during a test is therefore committed for good -- including
+         * the rate limiter counters behind the throttled public routes, which
+         * would carry into the next test until the bucket burst and healthy
+         * requests started coming back as 429. Clear it with tenancy already
+         * up, so the tenant-prefixed keys go with it.
+         */
+        Cache::flush();
+
         $this->parentBeginDatabaseTransaction();
     }
 
