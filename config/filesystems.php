@@ -54,6 +54,8 @@ return [
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
+            // Disco do Media Library (MEDIA_DISK): os links temporários de anexo saem daqui. Ver `central`.
+            'public_endpoint' => env('AWS_PUBLIC_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => true,
         ],
@@ -66,6 +68,15 @@ return [
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
+            /*
+             * Endpoint que o navegador alcança, quando difere do que o PHP usa
+             * (MinIO local: PHP fala com `minio:9000`, o navegador com
+             * `localhost:9000`). Usado para *assinar* as signed URLs de upload
+             * (SignedStorageUrlService) e de download (PublicEndpointUrlGenerator)
+             * — não use `temporary_url`, que reescreve o host depois de assinar
+             * e quebra a assinatura. Vazio em produção (AWS).
+             */
+            'public_endpoint' => env('AWS_PUBLIC_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => true,
         ],

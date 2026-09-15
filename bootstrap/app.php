@@ -9,10 +9,12 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Modules\Common\Core\Commands\DeleteBucketTempFiles;
 use Modules\Common\Core\Commands\SendReleaseNotesNotification;
 use Modules\Common\Core\Exceptions\ApiException;
 use Modules\Common\Core\Exceptions\Exception as CoreException;
 use Modules\Common\Logs\Commands\DeleteOldAccessLogs;
+use Modules\Ouvidoria\Commands\DeleteOrphanPublicAttachments;
 use Modules\Tenant\Jobs\InactiveStatusAds;
 use Modules\Tenant\Middleware\InitializeTenancyByRequestData;
 use Modules\Transport\Jobs\AlertUsersAboutCnhExpiration;
@@ -70,7 +72,11 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withCommands([
+        // `app:delete-bucket-temp-files` was scheduled without being registered here,
+        // so the nightly run failed with "command is not defined".
+        DeleteBucketTempFiles::class,
         DeleteOldAccessLogs::class,
+        DeleteOrphanPublicAttachments::class,
         SendReleaseNotesNotification::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
@@ -86,5 +92,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $schedule->command('app:delete-old-access-logs')->daily();
         $schedule->command('app:delete-bucket-temp-files')->daily();
+        $schedule->command('ouvidoria:delete-orphan-attachments')->daily();
     })
     ->create();

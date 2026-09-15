@@ -22,6 +22,7 @@ enum PermissionGroups: string
 
     case OUVIDORIA_UNITS = 'Ouvidoria:Unidades';
     case OUVIDORIA_DESTINATION_AGENCIES = 'Ouvidoria:Órgãos Destinatários';
+    case OUVIDORIA_MANIFESTATIONS = 'Ouvidoria:Manifestações';
 
     case OTHERS_TRANSPORT = 'Outros:Logística e Transporte';
     case OTHERS_MISC = 'Outros:Diversos';
@@ -45,6 +46,7 @@ enum PermissionGroups: string
 
             str_contains($permissionName, 'vehicle') => self::OTHERS_TRANSPORT,
 
+            str_contains($permissionName, 'manifestations') => self::OUVIDORIA_MANIFESTATIONS,
             str_contains($permissionName, 'destination-agencies') => self::OUVIDORIA_DESTINATION_AGENCIES,
             str_contains($permissionName, 'unit') => self::OUVIDORIA_UNITS,
 
@@ -119,6 +121,7 @@ enum PermissionGroups: string
 
             self::OUVIDORIA_UNITS => 'Gerencia as unidades da ouvidoria, destinatárias das manifestações.',
             self::OUVIDORIA_DESTINATION_AGENCIES => 'Gerencia os órgãos e secretarias que podem receber manifestações.',
+            self::OUVIDORIA_MANIFESTATIONS => 'Gerencia as manifestações recebidas pela ouvidoria: triagem, andamentos e parecer ao cidadão.',
 
             self::OTHERS_TRANSPORT => 'Gerencia logística e transporte.',
             self::OTHERS_MISC => 'Funcionalidades diversas complementares.',
