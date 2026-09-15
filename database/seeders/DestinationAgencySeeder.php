@@ -10,19 +10,25 @@ use Modules\Ouvidoria\Models\DestinationAgency;
 class DestinationAgencySeeder extends Seeder
 {
     /**
-     * Baseline agencies for the manifestation form. Idempotent: keyed by name,
-     * so re-running `db:seed` never duplicates rows.
+     * Órgãos oficiais da Prefeitura Municipal de Durandé. Idempotente: chaveado
+     * por nome, então rodar `db:seed` de novo nunca duplica linhas. A ordem da
+     * lista define o campo `order` (índice * 10) e, com ela, a ordem no combo.
      */
     private const AGENCIES = [
-        'Gabinete do Prefeito',
+        'Chefe de Gabinete',
+        'Controle Interno',
+        'Departamento de RH',
+        'Manutenção da Iluminação Pública',
+        'Ouvidoria',
+        'Prefeitura Municipal de Durandé',
+        'Procuradoria',
         'Secretaria de Administração',
-        'Secretaria de Assistência Social',
-        'Secretaria de Educação',
-        'Secretaria de Fazenda',
-        'Secretaria de Infraestrutura e Obras',
-        'Secretaria de Meio Ambiente',
+        'Secretaria Municipal de Agricultura, Indústria, Comércio, Meio Ambiente e desenvolvimento sustentável',
+        'Secretaria Municipal de Cultura, Lazer e Turismo',
+        'Secretaria Municipal de Educação',
+        'Secretaria Municipal de Fazenda, Gestão e Planejamento',
+        'Secretaria Municipal de Promoção e Assistência Social',
         'Secretaria de Saúde',
-        'Secretaria de Segurança Pública',
     ];
 
     public function run(): void

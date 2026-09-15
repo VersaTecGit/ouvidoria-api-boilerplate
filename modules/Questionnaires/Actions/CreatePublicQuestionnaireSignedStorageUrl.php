@@ -6,16 +6,16 @@ namespace Modules\Questionnaires\Actions;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Modules\Common\Core\Support\SignedStorageUrlService;
 use Modules\Questionnaires\DTOs\CreatePublicQuestionnaireSignedStorageUrlDTO;
 use Modules\Questionnaires\Models\Questionnaire;
-use Modules\Questionnaires\Support\PublicQuestionnaireSignedStorageUrlService;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 final readonly class CreatePublicQuestionnaireSignedStorageUrl
 {
     public function __construct(
-        private PublicQuestionnaireSignedStorageUrlService $signedStorageUrlService,
+        private SignedStorageUrlService $signedStorageUrlService,
     ) {}
 
     public function handle(string $uuid, CreatePublicQuestionnaireSignedStorageUrlDTO $dto): array

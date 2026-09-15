@@ -105,6 +105,13 @@ enum Permissions: string
     case EDIT_DESTINATION_AGENCIES = 'ALL-edit-destination-agencies';
     case DELETE_DESTINATION_AGENCIES = 'ALL-delete-destination-agencies';
 
+    case LIST_MANIFESTATIONS = 'ALL-list-manifestations';
+    case VIEW_MANIFESTATIONS = 'ALL-view-manifestations';
+    case CREATE_MANIFESTATIONS = 'ALL-create-manifestations';
+    case EDIT_MANIFESTATIONS = 'ALL-edit-manifestations';
+    case DELETE_MANIFESTATIONS = 'ALL-delete-manifestations';
+    case RESPOND_MANIFESTATIONS = 'ALL-respond-manifestations';
+
     public static function all(): array
     {
         return [
@@ -206,6 +213,13 @@ enum Permissions: string
             self::CREATE_DESTINATION_AGENCIES,
             self::EDIT_DESTINATION_AGENCIES,
             self::DELETE_DESTINATION_AGENCIES,
+
+            self::LIST_MANIFESTATIONS,
+            self::VIEW_MANIFESTATIONS,
+            self::CREATE_MANIFESTATIONS,
+            self::EDIT_MANIFESTATIONS,
+            self::DELETE_MANIFESTATIONS,
+            self::RESPOND_MANIFESTATIONS,
         ];
     }
 
@@ -316,6 +330,13 @@ enum Permissions: string
             self::CREATE_DESTINATION_AGENCIES => 'Criar órgãos destinatários',
             self::EDIT_DESTINATION_AGENCIES => 'Editar órgãos destinatários',
             self::DELETE_DESTINATION_AGENCIES => 'Deletar órgãos destinatários',
+
+            self::LIST_MANIFESTATIONS => 'Listar manifestações',
+            self::VIEW_MANIFESTATIONS => 'Visualizar manifestações',
+            self::CREATE_MANIFESTATIONS => 'Criar manifestações',
+            self::EDIT_MANIFESTATIONS => 'Editar manifestações',
+            self::DELETE_MANIFESTATIONS => 'Deletar manifestações',
+            self::RESPOND_MANIFESTATIONS => 'Responder manifestações',
         };
     }
 
@@ -418,6 +439,13 @@ enum Permissions: string
             self::CREATE_DESTINATION_AGENCIES => 'Permite que o usuário cadastre novos órgãos e secretarias destinatários das manifestações.',
             self::EDIT_DESTINATION_AGENCIES => 'Permite que o usuário edite os órgãos e secretarias destinatários das manifestações.',
             self::DELETE_DESTINATION_AGENCIES => 'Permite que o usuário delete os órgãos e secretarias destinatários das manifestações.',
+
+            self::LIST_MANIFESTATIONS => 'Permite que o usuário liste as manifestações recebidas pela ouvidoria.',
+            self::VIEW_MANIFESTATIONS => 'Permite que o usuário visualize os detalhes de uma manifestação, incluindo os dados do manifestante identificado e as notas internas.',
+            self::CREATE_MANIFESTATIONS => 'Permite que o usuário registre manifestações pelo painel interno, por exemplo as recebidas presencialmente ou por telefone.',
+            self::EDIT_MANIFESTATIONS => 'Permite que o usuário edite os dados de triagem de uma manifestação, como tipo, status e órgão destinatário.',
+            self::DELETE_MANIFESTATIONS => 'Permite que o usuário delete manifestações.',
+            self::RESPOND_MANIFESTATIONS => 'Permite que o usuário escreva o parecer e os andamentos que o cidadão lê pelo protocolo, além das notas internas.',
 
             default => 'Detalhes não disponíveis para esta permissão.',
         };

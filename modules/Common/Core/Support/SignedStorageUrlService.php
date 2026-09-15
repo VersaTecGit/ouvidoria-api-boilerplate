@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Modules\Questionnaires\Support;
+namespace Modules\Common\Core\Support;
 
 use Aws\S3\S3Client;
 use InvalidArgumentException;
 
-final class PublicQuestionnaireSignedStorageUrlService
+class SignedStorageUrlService
 {
     public function generate(
         string $key,
@@ -63,18 +63,28 @@ final class PublicQuestionnaireSignedStorageUrlService
         );
     }
 
+    /*
+     * Signs against the `central` disk — the one the uploaded object is later
+     * read from. The endpoint is the one the *browser* will PUT to: SigV4
+     * signs the host, so it must be the public one when PHP and the browser
+     * reach the storage by different names (MinIO locally). Without any
+     * endpoint a custom S3 host would still get URLs pointing at AWS.
+     */
     private function storageClient(): S3Client
     {
-        return new S3Client([
-            'region' => config('filesystems.disks.s3.region', $_ENV['AWS_DEFAULT_REGION']),
+        $disk = config('filesystems.disks.central', []);
+
+        return new S3Client(array_filter([
+            'region' => $disk['region'] ?? $_ENV['AWS_DEFAULT_REGION'],
             'version' => 'latest',
             'signature_version' => 'v4',
-            'use_path_style_endpoint' => config('filesystems.disks.s3.use_path_style_endpoint', false),
+            'endpoint' => $disk['public_endpoint'] ?? $disk['endpoint'] ?? null,
+            'use_path_style_endpoint' => (bool) ($disk['use_path_style_endpoint'] ?? false),
             'credentials' => array_filter([
                 'key' => $_ENV['AWS_ACCESS_KEY_ID'] ?? null,
                 'secret' => $_ENV['AWS_SECRET_ACCESS_KEY'] ?? null,
                 'token' => $_ENV['AWS_SESSION_TOKEN'] ?? null,
             ]),
-        ]);
+        ], fn (mixed $value): bool => $value !== null && $value !== ''));
     }
 }
